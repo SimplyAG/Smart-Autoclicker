@@ -30,14 +30,14 @@ logs/
 # Windows
 Thumbs.db
 
-# Minecraft
-saves/
-screenshots/
-config/
-crash-reports/
+# Minecraft (only at the root, so source folders like src/.../config/ stay tracked)
+/saves/
+/screenshots/
+/config/
+/crash-reports/
 logs/
-resourcepacks/
-shaderpacks/
+/resourcepacks/
+/shaderpacks/
 # Stonecutter keeps per-version settings in versions/, so only its build output is ignored
 versions/*/build/
 versions/*/run/
