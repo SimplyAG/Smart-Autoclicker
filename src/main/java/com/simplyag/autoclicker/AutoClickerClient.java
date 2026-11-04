@@ -10,12 +10,13 @@ import com.simplyag.autoclicker.ui.StatusHud;
 import com.simplyag.autoclicker.util.Compat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+//? if >=1.21.11 {
 import net.minecraft.resources.Identifier;
+//?} else
+/*import net.minecraft.resources.ResourceLocation;*/
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,10 @@ public class AutoClickerClient implements ClientModInitializer {
     public static final String MOD_ID = "smart-autoclicker";
     public static final Logger LOGGER = LoggerFactory.getLogger("Smart Autoclicker");
 
-    private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(id("main"));
+    //? if >=1.21.11 {
+    public static final Identifier ICON_TEXTURE = id("icon.png");
+    //?} else
+    /*public static final ResourceLocation ICON_TEXTURE = id("icon.png");*/
 
     private static KeyMapping openPanelKey;
     private static KeyMapping stopAllKey;
@@ -51,9 +55,15 @@ public class AutoClickerClient implements ClientModInitializer {
         return null;
     }
 
+    //? if >=1.21.11 {
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
+    //?} else {
+    /*public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+    *///?}
 
     @Override
     public void onInitializeClient() {
@@ -66,7 +76,7 @@ public class AutoClickerClient implements ClientModInitializer {
             SafetyMonitor.tick(client);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> ModuleManager.stopAll(null)));
-        HudElementRegistry.addLast(id("status"), new StatusHud());
+        Compat.registerHud("status", StatusHud::draw);
     }
 
     private static void registerKeys() {
@@ -82,7 +92,7 @@ public class AutoClickerClient implements ClientModInitializer {
     }
 
     private static KeyMapping register(String name, int defaultKey) {
-        return KeyMappingHelper.registerKeyMapping(new KeyMapping("key." + MOD_ID + "." + name, Compat.KEYBOARD, defaultKey, CATEGORY));
+        return Compat.registerKey(name, defaultKey);
     }
 
     private static void handleKeys(Minecraft mc) {

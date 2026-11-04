@@ -85,7 +85,7 @@ public final class Notifier {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(
                     bad ? SoundEvents.NOTE_BLOCK_BASS.value() : SoundEvents.NOTE_BLOCK_CHIME.value(), bad ? 0.7f : 1.2f, 1.0f));
         }
-        if (cfg.flashTaskbar && !mc.getWindow().isFocused()) {
+        if (cfg.flashTaskbar && !Compat.windowFocused(mc)) {
             Compat.flashWindow(mc);
         }
         toast(new Object(), icon, title, message, bad ? COLOR_BAD : COLOR_GOOD);
@@ -93,6 +93,6 @@ public final class Notifier {
 
     private static void toast(Object token, ItemStack icon, Component title, @Nullable Component message, int color) {
         if (!SmartConfig.get().toasts) return;
-        SmartToast.show(Compat.toasts(Minecraft.getInstance()), token, icon, title, message, color);
+        SmartToast.show(Minecraft.getInstance(), token, icon, title, message, color);
     }
 }

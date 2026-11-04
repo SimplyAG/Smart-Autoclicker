@@ -1,7 +1,6 @@
 package com.simplyag.autoclicker.ui.panel;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.ARGB;
+import com.simplyag.autoclicker.ui.Gfx;
 import net.minecraft.util.Mth;
 
 /** Colors and small drawing primitives shared by the control panel. */
@@ -32,7 +31,7 @@ public final class Theme {
     }
 
     /** A rectangle with its corner pixels cut off: reads as rounded at Minecraft's pixel scale. */
-    public static void round(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
+    public static void round(Gfx g, int x, int y, int w, int h, int color) {
         if (w <= 2 || h <= 2) {
             g.fill(x, y, x + w, y + h, color);
             return;
@@ -43,13 +42,13 @@ public final class Theme {
     }
 
     /** Rounded rectangle with a 1px border. */
-    public static void roundBordered(GuiGraphicsExtractor g, int x, int y, int w, int h, int fill, int border) {
+    public static void roundBordered(Gfx g, int x, int y, int w, int h, int fill, int border) {
         round(g, x, y, w, h, border);
         round(g, x + 1, y + 1, w - 2, h - 2, fill);
     }
 
     /** A pill: fully rounded ends, built from a stack of shrinking rows. */
-    public static void pill(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
+    public static void pill(Gfx g, int x, int y, int w, int h, int color) {
         int r = h / 2;
         for (int row = 0; row < h; row++) {
             double dy = Math.abs(row + 0.5 - h / 2.0);
@@ -58,11 +57,20 @@ public final class Theme {
         }
     }
 
+    /** Blends two ARGB colors channel by channel (in sRGB, as the game's own lerp does). */
     public static int lerpColor(float t, int from, int to) {
-        return ARGB.srgbLerp(Mth.clamp(t, 0, 1), from, to);
+        float f = Mth.clamp(t, 0, 1);
+        int color = 0;
+        for (int shift = 0; shift <= 24; shift += 8) {
+            int a = (from >>> shift) & 0xFF;
+            int b = (to >>> shift) & 0xFF;
+            color |= (a + Mth.floor(f * (b - a))) << shift;
+        }
+        return color;
     }
 
     public static int withAlpha(int color, float alpha) {
-        return ARGB.color(Math.round(ARGB.alpha(color) * Mth.clamp(alpha, 0, 1)), color);
+        int a = Math.round((color >>> 24) * Mth.clamp(alpha, 0, 1));
+        return a << 24 | color & 0xFFFFFF;
     }
 }

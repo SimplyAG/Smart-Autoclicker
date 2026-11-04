@@ -6,7 +6,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -103,7 +102,7 @@ public final class Inventories {
      */
     public static int spareHotbarSlot(LocalPlayer player) {
         Inventory inventory = player.getInventory();
-        int selected = inventory.getSelectedSlot();
+        int selected = Compat.selectedSlot(inventory);
         for (int slot = HOTBAR_SIZE - 1; slot >= 0; slot--) {
             if (slot != selected && inventory.getItem(slot).isEmpty()) return slot;
         }
@@ -118,7 +117,7 @@ public final class Inventories {
         Minecraft mc = Minecraft.getInstance();
         if (mc.gameMode == null || player.containerMenu != player.inventoryMenu) return false;
         // In the player's own inventory menu, main inventory slots 9-35 keep the same index.
-        mc.gameMode.handleContainerInput(player.inventoryMenu.containerId, inventorySlot, hotbarSlot, ContainerInput.SWAP, player);
+        Compat.swapWithHotbar(mc, player, inventorySlot, hotbarSlot);
         return true;
     }
 

@@ -6,24 +6,24 @@ import com.simplyag.autoclicker.module.ModuleManager;
 import com.simplyag.autoclicker.module.Session;
 import com.simplyag.autoclicker.ui.panel.Theme;
 import com.simplyag.autoclicker.util.Compat;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** Compact panel listing what's running, with a live status for each, in a corner of the screen. */
-public class StatusHud implements HudElement {
+public final class StatusHud {
     private static final int PADDING = 4;
     private static final int LINE_HEIGHT = 11;
     private static final int MARGIN = 4;
 
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+    private StatusHud() {
+    }
+
+    /** Registered as a HUD layer by Compat.registerHud; runs every frame. */
+    public static void draw(Gfx graphics) {
         Minecraft mc = Minecraft.getInstance();
         SmartConfig cfg = SmartConfig.get();
         if (!cfg.showHud || Compat.hudHidden(mc) || mc.player == null || !ModuleManager.anyRunning()) return;
@@ -55,11 +55,11 @@ public class StatusHud implements HudElement {
 
         int textY = y + PADDING + 1;
         Theme.pill(graphics, x + PADDING, textY + 2, 4, 4, Theme.GOOD);
-        graphics.text(font, header, x + PADDING + 8, textY, Theme.TEXT_DIM, false);
+        graphics.text(font, header, x + PADDING + 8, textY, Theme.TEXT_DIM);
         for (Line line : lines) {
             textY += LINE_HEIGHT;
             Theme.round(graphics, x + PADDING, textY + 1, 5, 6, line.module.color());
-            graphics.text(font, line.text, x + PADDING + 10, textY, Theme.TEXT, false);
+            graphics.text(font, line.text, x + PADDING + 10, textY, Theme.TEXT);
         }
     }
 
