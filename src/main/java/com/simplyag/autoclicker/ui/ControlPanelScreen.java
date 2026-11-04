@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.ui;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.config.SmartConfig;
@@ -620,7 +621,7 @@ public class ControlPanelScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.gui.setScreen(parent);
+        Compat.setScreen(minecraft, parent);
     }
 
     @Override

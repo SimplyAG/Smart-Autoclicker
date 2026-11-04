@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.gametest;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.module.ModuleManager;
@@ -9,12 +10,14 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
-import org.lwjgl.sdl.SDLVideo;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+//? if >=26.2 {
 import net.minecraft.world.entity.EntityTypes;
+//?} else
+/*import net.minecraft.world.entity.EntityType;*/
 import net.minecraft.world.item.Items;
 
 import java.util.List;
@@ -29,7 +32,7 @@ public class AutoClickerClientGameTest implements FabricClientGameTest {
         // Stay out of the way of whatever else is going on at this computer: no sound, no window on top
         context.runOnClient(mc -> {
             mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
-            SDLVideo.SDL_MinimizeWindow(mc.getWindow().handle());
+            Compat.minimizeWindow(mc);
         });
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             TestServerContext server = singleplayer.getServer();
@@ -273,7 +276,8 @@ public class AutoClickerClientGameTest implements FabricClientGameTest {
         context.waitTicks(15);
         context.takeScreenshot("sac_auto_attack_running");
 
-        server.waitFor(s -> countHusks(s) == 0, 20 * 15);
+        // Polled here because TestServerContext.waitFor only exists in newer Fabric API versions
+        for (int t = 0; t < 20 * 15 && server.computeOnServer(AutoClickerClientGameTest::countHusks) > 0; t++) context.waitTick();
         int attacks = context.computeOnClient(mc -> ModuleManager.session().attacks);
         check(attacks >= 2, "Auto Attack: expected several swings, got " + attacks);
         context.runOnClient(mc -> ModuleManager.stopAllByUser());
@@ -429,7 +433,10 @@ public class AutoClickerClientGameTest implements FabricClientGameTest {
     }
 
     private static int countHusks(MinecraftServer server) {
+        //? if >=26.2 {
         return server.overworld().getEntities(EntityTypes.HUSK, e -> e.isAlive()).size();
+        //?} else
+        /*return server.overworld().getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
     }
 
     private static void check(boolean condition, String message) {

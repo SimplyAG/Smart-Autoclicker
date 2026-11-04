@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -29,7 +30,7 @@ public class MobSweepModule extends Module {
     @Override
     public void tick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        if (player == null || mc.gui.screen() != null || ModuleManager.AUTO_EAT.isBusy()) return;
+        if (player == null || Compat.screen(mc) != null || ModuleManager.AUTO_EAT.isBusy()) return;
         SmartConfig cfg = SmartConfig.get();
         ticks++;
         float periodTicks = cfg.sweepPeriodTenths * 2f; // tenths of a second -> ticks

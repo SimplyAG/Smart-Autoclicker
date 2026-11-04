@@ -1,0 +1,13 @@
+{
+  "_comment": [
+    "One published jar per group, built from the group's first version (the lead) and declaring the group's",
+    "Minecraft versions. A version may only join a group if (1) its own build compiles to classes byte-identical",
+    "to the lead's (verifyGroupClasses) and (2) the in-game tests pass on it (runClientGameTest).",
+    "Every member compiles at the lead's Java level so the comparison is exact. Never list an untested version."
+  ],
+  "groups": [
+    { "minecraft": ["26.1", "26.1.1", "26.1.2"] },
+    { "minecraft": ["26.2"] },
+    { "minecraft": ["26.3"] }
+  ]
+}

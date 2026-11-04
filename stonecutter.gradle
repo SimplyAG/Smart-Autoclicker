@@ -1,0 +1,23 @@
+plugins {
+	id "dev.kikugie.stonecutter"
+}
+// The version the IDE and the plain src/ files are switched to. Switch with: ./gradlew "Set active project to 26.2"
+stonecutter.active "26.3"
+
+// Which Minecraft versions share one published jar. Read here, before the version projects are configured,
+// so every target sees the same groups.
+ext.sacReleaseGroups = new groovy.json.JsonSlurper().parse(file('release-groups.json')).groups
+
+// verifyGroupClasses, stageRelease
+apply from: 'gradle/release-root.gradle'
+
+// The in-game tests open a real game window, so they run one after another even in a parallel build.
+gradle.projectsEvaluated {
+	def previous = null
+	subprojects.each { p ->
+		def test = p.tasks.findByName('runClientGameTest')
+		if (test == null) return
+		if (previous != null) test.mustRunAfter(previous)
+		previous = test
+	}
+}

@@ -24,14 +24,14 @@ At <https://authors.curseforge.com> → **Create Project**:
 
 ## Upload a file (each release)
 
-1. Bump `mod_version` in `gradle.properties`.
-2. `./gradlew build` and upload `build/libs/smart-autoclicker-<version>.jar` (not the `-sources` jar).
-3. File settings:
+1. Bump `mod_version` in `gradle.properties` and add a changelog entry below.
+2. `./gradlew clean build stageRelease` (see `CONTRIBUTING.md`). Upload **each** jar from `release-staging/<version>/`, one CurseForge file per jar (never the `-sources` jars).
+3. File settings, per jar:
 
 | Field | Value |
 |---|---|
-| Release type | **Beta** for 1.0.0, then Release once it has had real-world use |
-| Game version | 26.3 |
+| Release type | **Beta** for the first release, then Release once it has had real-world use |
+| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.1.0: `smart-autoclicker-mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
 | Mod loader | Fabric |
 | Environment | Client |
 | Java | 25 |
@@ -84,15 +84,15 @@ Using the Freecam mod? Auto Attack and Mob Sweep keep working from where your ch
 **K** opens the control panel (or use Mod Menu). **Z** stops everything. **H** toggles Auto Walk. Every module and preset can have its own key in *Controls → Key Binds*.
 
 ### Requirements
-Fabric Loader, **Fabric API**. Optional: Mod Menu.
+Minecraft 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu. Pick the file for your Minecraft version.
 
 ⚠ **Only use this on servers that allow auto clickers and AFK automation.** It's client-side only.
 
 ---
 
-## Changelog for 1.0.0
+## Changelog for 1.1.0
 
-First release.
+First release, for Minecraft 26.1, 26.1.1, 26.1.2, 26.2 and 26.3.
 
 - Auto Attack with perfect swing timing, mob filters, armor stand option, and protection for pets, named mobs, villagers and golems
 - Smart Auto Eat: best safe food, hotbar refill, switches back to your weapon

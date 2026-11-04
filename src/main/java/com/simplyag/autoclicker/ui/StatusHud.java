@@ -5,6 +5,7 @@ import com.simplyag.autoclicker.module.Module;
 import com.simplyag.autoclicker.module.ModuleManager;
 import com.simplyag.autoclicker.module.Session;
 import com.simplyag.autoclicker.ui.panel.Theme;
+import com.simplyag.autoclicker.util.Compat;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -25,7 +26,7 @@ public class StatusHud implements HudElement {
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
         SmartConfig cfg = SmartConfig.get();
-        if (!cfg.showHud || mc.gui.hud.isHidden() || mc.player == null || !ModuleManager.anyRunning()) return;
+        if (!cfg.showHud || Compat.hudHidden(mc) || mc.player == null || !ModuleManager.anyRunning()) return;
         Font font = mc.font;
 
         List<Line> lines = new ArrayList<>();

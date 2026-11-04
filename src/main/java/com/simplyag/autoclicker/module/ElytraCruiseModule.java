@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Inventories;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -107,7 +108,7 @@ public class ElytraCruiseModule extends Module {
             stopWithReason(Component.translatable("smart-autoclicker.toast.arrived", (int) distance), false);
             return;
         }
-        if (mc.gui.screen() != null) return;
+        if (Compat.screen(mc) != null) return;
 
         if (cfg.elytraHoldAltitude) holdAltitude(player);
 

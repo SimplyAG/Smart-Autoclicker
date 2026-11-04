@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Input;
 import com.simplyag.autoclicker.util.Inventories;
 import com.simplyag.autoclicker.util.Notifier;
@@ -75,7 +76,7 @@ public class AutoEatModule extends Module {
         // Creative players don't get hungry; Hold Right already eats whatever is in hand.
         if (player.hasInfiniteMaterials() || ModuleManager.HOLD_USE.isRunning()) return;
         // Menus stop key handling; finish up quietly if the eat ended meanwhile.
-        if (mc.gui.screen() != null) {
+        if (Compat.screen(mc) != null) {
             if (state == State.EATING && !player.isUsingItem()) finishEating(mc, player);
             return;
         }

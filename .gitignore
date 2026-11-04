@@ -47,3 +47,5 @@ versions/*/run/
 *.swp
 *.bak
 *~
+release-staging/
+versions/*/.gradle/

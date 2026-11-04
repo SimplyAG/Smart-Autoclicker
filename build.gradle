@@ -1,24 +1,30 @@
+// Build script for every Minecraft version project (Stonecutter runs it once per versions/<mc>).
+// The unobfuscated targets (26.1+) use Mojang names natively: non-remapping Loom, no mappings, Java 25.
+
 plugins {
+	id 'dev.kikugie.stonecutter'
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
 }
+
+// Release groups and the jar allowlist; sets the ext.sac* values used below.
+apply from: rootProject.file('gradle/release-target.gradle')
 
 version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = "${project.archives_base_name}-mc${sacArchiveSuffix}"
 }
 
 repositories {
 	maven {
 		name = "TerraformersMC"
 		url = "https://maven.terraformersmc.com/releases/"
+		content { includeGroup "com.terraformersmc" }
 	}
 }
 
 dependencies {
-	// Minecraft 26.x ships unobfuscated, so there are no mappings and no remapping.
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
@@ -28,7 +34,7 @@ dependencies {
 	localRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
-// In-game client tests: ./gradlew runClientGameTest (creates a world, runs each feature, saves screenshots)
+// In-game client tests: ./gradlew :26.3:runClientGameTest (creates a world, runs each feature, saves screenshots)
 fabricApi {
 	configureTests {
 		createSourceSet = true
@@ -39,36 +45,51 @@ fabricApi {
 	}
 }
 
+// Every member of a release group compiles at the group lead's Java level, so its classes can be compared byte for
+// byte with the lead's and the lead's jar runs on all of them.
+def javaVersion = sacJavaVersion as int
+
 processResources {
 	inputs.property "version", project.version
-	inputs.property "minecraft_version", project.minecraft_version
-	inputs.property "loader_version", project.loader_version
+	inputs.property "minecraft_dep", sacMinecraftDepItems
+	inputs.property "java_version", javaVersion
+	inputs.property "loader_floor", project.loader_floor
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version,
-				"minecraft_version": project.minecraft_version,
-				"loader_version": project.loader_version
+				"minecraft_dep": sacMinecraftDepItems,
+				"java_version": javaVersion,
+				"loader_floor": project.loader_floor
+	}
+
+	// The shared mixins.json says JAVA_21; Mixin refuses levels the running Java can't do, so set it per target.
+	filesMatching("smart-autoclicker.mixins.json") {
+		filter { String line -> line.replace('"JAVA_21"', "\"JAVA_${javaVersion}\"") }
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
+	it.options.release = javaVersion
 	it.options.encoding = "UTF-8"
+	// One fixed javac per target, whatever JDK runs Gradle: javac versions number lambdas differently, which would
+	// make otherwise identical classes differ between a group's members.
+	it.javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
 }
 
 java {
 	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = JavaVersion.toVersion(javaVersion)
+	targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
 jar {
-	from("LICENSE") {
+	// Each version project has its own directory, so the license comes from the root.
+	from(rootProject.file("LICENSE")) {
 		rename { "${it}_${project.base.archivesName.get()}" }
 	}
 }
 
-// Test alongside another mod: ./gradlew runClientGameTest -PtestMods=path/to/mod.jar
 tasks.matching { it.name == 'runClientGameTest' }.configureEach {
-    if (project.hasProperty('testMods')) systemProperty 'fabric.addMods', project.property('testMods')
+	// Test alongside another mod: -PtestMods=/absolute/path/to/mod.jar (e.g. Freecam)
+	if (project.hasProperty('testMods')) systemProperty 'fabric.addMods', project.property('testMods')
 }

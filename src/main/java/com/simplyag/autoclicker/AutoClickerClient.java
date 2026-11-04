@@ -7,6 +7,7 @@ import com.simplyag.autoclicker.module.ModuleManager;
 import com.simplyag.autoclicker.module.SafetyMonitor;
 import com.simplyag.autoclicker.ui.ControlPanelScreen;
 import com.simplyag.autoclicker.ui.StatusHud;
+import com.simplyag.autoclicker.util.Compat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -81,12 +82,12 @@ public class AutoClickerClient implements ClientModInitializer {
     }
 
     private static KeyMapping register(String name, int defaultKey) {
-        return KeyMappingHelper.registerKeyMapping(new KeyMapping("key." + MOD_ID + "." + name, InputConstants.Type.KEYBOARD, defaultKey, CATEGORY));
+        return KeyMappingHelper.registerKeyMapping(new KeyMapping("key." + MOD_ID + "." + name, Compat.KEYBOARD, defaultKey, CATEGORY));
     }
 
     private static void handleKeys(Minecraft mc) {
         while (openPanelKey.consumeClick()) {
-            if (mc.gui.screen() == null) mc.gui.setScreen(new ControlPanelScreen(null));
+            if (Compat.screen(mc) == null) Compat.setScreen(mc, new ControlPanelScreen(null));
         }
         while (stopAllKey.consumeClick()) {
             ModuleManager.stopAllByUser();

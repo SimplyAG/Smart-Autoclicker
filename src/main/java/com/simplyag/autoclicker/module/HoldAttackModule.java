@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Input;
 import com.simplyag.autoclicker.util.Inventories;
 import net.minecraft.client.Minecraft;
@@ -18,7 +19,7 @@ public class HoldAttackModule extends Module {
     @Override
     public void tick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        if (player == null || mc.gui.screen() != null) return;
+        if (player == null || Compat.screen(mc) != null) return;
         if (ModuleManager.AUTO_EAT.isBusy()) {
             Input.release(mc.options.keyAttack);
             return;

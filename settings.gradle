@@ -4,9 +4,29 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
+		maven {
+			name = 'Stonecutter'
+			url = 'https://maven.kikugie.dev/releases'
+		}
 		mavenCentral()
 		gradlePluginPortal()
 	}
 }
 
-rootProject.name = "smart-autoclicker"
+plugins {
+	id 'dev.kikugie.stonecutter' version '0.7.11'
+}
+
+// One source tree, one Gradle project per Minecraft version (versions/<mc>/gradle.properties).
+// Version-specific code is written as Stonecutter comments, e.g. //? if >=26.2 { ... } in src/.
+// Which versions share a published jar is decided by release-groups.json, not here.
+stonecutter {
+	kotlinController = false
+	centralScript = 'build.gradle'
+	create(rootProject) {
+		// Unobfuscated Minecraft (26.1+): Mojang names natively, non-remapping Loom, Java 25.
+		versions '26.1', '26.1.1', '26.1.2', '26.2', '26.3'
+	}
+}
+
+rootProject.name = 'smart-autoclicker'

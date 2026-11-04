@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Input;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -22,7 +23,7 @@ public class AutoWalkModule extends Module {
 
     @Override
     public void tick(Minecraft mc) {
-        if (mc.player == null || mc.gui.screen() != null) return;
+        if (mc.player == null || Compat.screen(mc) != null) return;
         SmartConfig cfg = SmartConfig.get();
         KeyMapping key = keyFor(mc.options, cfg.walkDirection);
         if (heldKey != null && heldKey != key) Input.release(heldKey); // direction changed in settings

@@ -1,6 +1,6 @@
 # Smart Autoclicker
 
-Smart AFK automation for Minecraft **26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
+Smart AFK automation for Minecraft **26.1 – 26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
 
 ## Features
 
@@ -39,23 +39,25 @@ Change these under **Options → Controls → Key Binds → Smart Autoclicker**.
 
 ## Install
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5+ for Minecraft 26.3 (in Prism Launcher: *Edit instance → Version → Install Fabric*).
-2. Add [Fabric API](https://modrinth.com/mod/fabric-api) 0.161.0+.
-3. Add `smart-autoclicker-<version>.jar` to the `mods` folder.
+1. Install [Fabric Loader](https://fabricmc.net/use/) 0.18.4+ (in Prism Launcher: *Edit instance → Version → Install Fabric*).
+2. Add [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft version.
+3. Add the jar for your Minecraft version to the `mods` folder, e.g. `smart-autoclicker-mc26.1-26.1.2-<version>.jar` for 26.1, 26.1.1 and 26.1.2.
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) for a config button in the mod list.
 
 Settings are saved to `config/smart-autoclicker.json`. Nothing starts automatically when you join a world.
 
 ## Build & test
 
-Requires Java 25.
+One source tree builds every supported Minecraft version with [Stonecutter](https://stonecutter.kikugie.dev/). Requires Java 25.
 
 ```bash
-./gradlew build              # jar in build/libs/
-./gradlew runClient          # dev client with the mod
-./gradlew runClientGameTest  # plays through every feature in a real world; screenshots in build/run/clientGameTest/screenshots
-./gradlew runClientGameTest -PtestMods=/absolute/path/to/freecam.jar  # also runs the Freecam tests
+./gradlew build verifyGroupClasses       # every version; jars in versions/<mc>/build/libs
+./gradlew :26.3:runClient                # dev client with the mod
+./gradlew runClientGameTest              # plays through every feature in a real world, on every version
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how versions share jars and how to add a new Minecraft version, and
+[docs/ROADMAP.md](docs/ROADMAP.md) for older versions.
 
 ## Server rules
 

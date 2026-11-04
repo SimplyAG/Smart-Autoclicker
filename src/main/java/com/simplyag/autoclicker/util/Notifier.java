@@ -13,7 +13,6 @@ import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.sdl.SDLVideo;
 
 import java.util.List;
 
@@ -36,7 +35,7 @@ public final class Notifier {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, on ? 1.4f : 0.8f));
         }
         // The control panel already shows on/off; a toast there would just cover its header.
-        if (mc.gui.screen() instanceof ControlPanelScreen) return;
+        if (Compat.screen(mc) instanceof ControlPanelScreen) return;
         toast(TOGGLE_TOKEN, module.icon(),
                 Component.translatable(on ? "smart-autoclicker.toast.on" : "smart-autoclicker.toast.off", module.name()),
                 on ? stopHint() : null, on ? COLOR_ON : COLOR_OFF);
@@ -52,7 +51,7 @@ public final class Notifier {
         if (SmartConfig.get().alertSounds) {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.4f));
         }
-        if (mc.gui.screen() instanceof ControlPanelScreen) return;
+        if (Compat.screen(mc) instanceof ControlPanelScreen) return;
         toast(TOGGLE_TOKEN, module.icon(), Component.translatable("smart-autoclicker.toast.on", module.name()),
                 Component.translatable("smart-autoclicker.toast.replaced", names(replaced)), COLOR_ON);
     }
@@ -87,13 +86,13 @@ public final class Notifier {
                     bad ? SoundEvents.NOTE_BLOCK_BASS.value() : SoundEvents.NOTE_BLOCK_CHIME.value(), bad ? 0.7f : 1.2f, 1.0f));
         }
         if (cfg.flashTaskbar && !mc.getWindow().isFocused()) {
-            SDLVideo.SDL_FlashWindow(mc.getWindow().handle(), SDLVideo.SDL_FLASH_UNTIL_FOCUSED);
+            Compat.flashWindow(mc);
         }
         toast(new Object(), icon, title, message, bad ? COLOR_BAD : COLOR_GOOD);
     }
 
     private static void toast(Object token, ItemStack icon, Component title, @Nullable Component message, int color) {
         if (!SmartConfig.get().toasts) return;
-        SmartToast.show(Minecraft.getInstance().gui.toastManager(), token, icon, title, message, color);
+        SmartToast.show(Compat.toasts(Minecraft.getInstance()), token, icon, title, message, color);
     }
 }

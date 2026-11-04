@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.module;
 
 import com.simplyag.autoclicker.config.SmartConfig;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Input;
 import com.simplyag.autoclicker.util.Inventories;
 import net.minecraft.client.Minecraft;
@@ -47,7 +48,7 @@ public class AutoAttackModule extends Module {
     @Override
     public void tick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        if (player == null || mc.gui.screen() != null) return;
+        if (player == null || Compat.screen(mc) != null) return;
         if (player.isUsingItem() || ModuleManager.AUTO_EAT.isBusy()) return;
         // With a detached camera (Freecam), the crosshair belongs to the camera, not to where you're facing
         boolean detached = cameraDetached(mc);
@@ -66,7 +67,7 @@ public class AutoAttackModule extends Module {
             // Freecam blocks the attack key while it's on, so hit directly, the same way the key does
             if (player.isHandsBusy() || mc.gameMode == null) return;
             mc.gameMode.attack(player, hit.getEntity());
-            player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getAttackAnimation(), false);
+            Compat.swingMainHand(player);
         } else {
             Input.click(mc.options.keyAttack);
         }
@@ -79,7 +80,7 @@ public class AutoAttackModule extends Module {
     private static @Nullable EntityHitResult pickFromPlayer(Minecraft mc, LocalPlayer player) {
         double range = player.entityInteractionRange();
         Vec3 eye = player.getEyePosition();
-        Vec3 look = Entity.calculateViewVector(player.getXRot(), player.getYRot());
+        Vec3 look = Compat.viewVector(player.getXRot(), player.getYRot());
         Vec3 end = eye.add(look.scale(range));
         HitResult block = mc.level.clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
         double maxSqr = block.getType() == HitResult.Type.MISS ? range * range : block.getLocation().distanceToSqr(eye);

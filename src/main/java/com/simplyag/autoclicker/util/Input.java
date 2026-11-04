@@ -47,9 +47,9 @@ public final class Input {
     /** Keyboard keys are checked directly; mouse buttons count as released (the next real click re-syncs them). */
     private static boolean isPhysicallyDown(KeyMapping key) {
         InputConstants.Key bound = KeyMappingHelper.getBoundKeyOf(key);
-        if (bound.getType() != InputConstants.Type.KEYBOARD || bound.getValue() == InputConstants.UNKNOWN.getValue()) {
+        if (bound.getType() != Compat.KEYBOARD || bound.getValue() == InputConstants.UNKNOWN.getValue()) {
             return false;
         }
-        return Minecraft.getInstance().getWindow().isFocused() && InputConstants.isKeyDown(bound.getValue());
+        return Minecraft.getInstance().getWindow().isFocused() && Compat.isKeyDown(Minecraft.getInstance(), bound.getValue());
     }
 }
