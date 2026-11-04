@@ -84,7 +84,24 @@ Using the Freecam mod? Auto Attack and Mob Sweep keep working from where your ch
 **K** opens the control panel (or use Mod Menu). **Z** stops everything. **H** toggles Auto Walk. Every module and preset can have its own key in *Controls → Key Binds*.
 
 ### Requirements
-Minecraft 1.21 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu. Pick the file for your Minecraft version.
+Minecraft 1.21 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu.
+
+### Which file do I download?
+The CurseForge app, Modrinth app and Prism pick the right file for you. Downloading by hand? Open **Files**, filter by your Minecraft version, or use this table. The Minecraft versions are also in each file name (`smart-autoclicker-mc1.21.6-1.21.8-…jar`).
+
+| Your Minecraft | File name starts with |
+|---|---|
+| 1.21, 1.21.1 | `smart-autoclicker-mc1.21-1.21.1` |
+| 1.21.2, 1.21.3, 1.21.4 | `smart-autoclicker-mc1.21.2-1.21.4` |
+| 1.21.5 | `smart-autoclicker-mc1.21.5` |
+| 1.21.6, 1.21.7, 1.21.8 | `smart-autoclicker-mc1.21.6-1.21.8` |
+| 1.21.9, 1.21.10 | `smart-autoclicker-mc1.21.9-1.21.10` |
+| 1.21.11 | `smart-autoclicker-mc1.21.11` |
+| 26.1, 26.1.1, 26.1.2 | `smart-autoclicker-mc26.1-26.1.2` |
+| 26.2 | `smart-autoclicker-mc26.2` |
+| 26.3 | `smart-autoclicker-mc26.3` |
+
+Got the wrong one? Nothing breaks: Fabric shows which Minecraft version the file needs, and the game doesn't start until you swap it.
 
 ⚠ **Only use this on servers that allow auto clickers and AFK automation.** It's client-side only.
 
