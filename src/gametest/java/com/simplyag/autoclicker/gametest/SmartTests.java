@@ -34,9 +34,8 @@ public final class SmartTests {
     public static void prepare(TestClient context) {
         context.runOnClient(mc -> {
             mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
-            // A small world loads in time on slow machines (CI runners render in software on two cores, and Fabric
-            // gives the world one minute): the lowest simulation distance, and a render distance that still keeps
-            // chunks ahead of the elytra flight loaded.
+            // Less work for slow machines (CI runners render in software): the lowest simulation distance, and a
+            // render distance that still keeps chunks ahead of the elytra flight loaded.
             mc.options.simulationDistance().set(5);
             mc.options.renderDistance().set(4);
             Compat.minimizeWindow(mc);
