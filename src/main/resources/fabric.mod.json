@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "smart-autoclicker",
+	"version": "${version}",
+	"name": "Smart Autoclicker",
+	"description": "Smart AFK automation: auto attack with perfect swing timing, smart auto eat, hold clicks, auto walk, mob sweep and elytra cruise. Alt-tab safe, with toasts and a HUD.",
+	"authors": [
+		"SimplyAG"
+	],
+	"contact": {
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/smart-autoclicker"
+	},
+	"license": "MIT",
+	"icon": "assets/smart-autoclicker/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.simplyag.autoclicker.AutoClickerClient"
+		],
+		"modmenu": [
+			"com.simplyag.autoclicker.integration.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"smart-autoclicker.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}

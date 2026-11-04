@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "smart-autoclicker-gametest",
+	"version": "1.0.0",
+	"name": "Smart Autoclicker Tests",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.simplyag.autoclicker.gametest.AutoClickerClientGameTest"
+		]
+	},
+	"depends": {
+		"smart-autoclicker": "*"
+	}
+}

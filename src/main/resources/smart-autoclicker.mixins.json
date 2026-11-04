@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.simplyag.autoclicker.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"KeyMappingAccessor",
+		"MinecraftMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

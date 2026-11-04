@@ -1,0 +1,49 @@
+# Gradle
+.gradle/
+build/
+out/
+classes/
+
+# Eclipse
+*.launch
+.settings/
+.metadata/
+.classpath
+.project
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VSCode
+.vscode/
+
+# Fabric
+run/
+logs/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Minecraft
+saves/
+screenshots/
+config/
+crash-reports/
+logs/
+resourcepacks/
+shaderpacks/
+# Stonecutter keeps per-version settings in versions/, so only its build output is ignored
+versions/*/build/
+versions/*/run/
+
+# Misc
+*.log
+*.swp
+*.bak
+*~
