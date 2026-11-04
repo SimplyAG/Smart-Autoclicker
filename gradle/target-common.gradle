@@ -87,6 +87,10 @@ jar {
 tasks.matching { it.name == 'runClientGameTest' }.configureEach {
 	// The game runs on the target's Java, not whatever JDK runs Gradle.
 	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+	// gametest_disable_network_synchronizer=true in a version's gradle.properties: see the comment there.
+	if (project.findProperty('gametest_disable_network_synchronizer') == 'true') {
+		systemProperty 'fabric.client.gametest.disableNetworkSynchronizer', 'true'
+	}
 	// Test alongside another mod: -PtestMods=/absolute/path/to/mod.jar (e.g. Freecam)
 	if (project.hasProperty('testMods')) systemProperty 'fabric.addMods', project.property('testMods')
 }
