@@ -38,6 +38,10 @@ public final class SmartTests {
             // render distance that still keeps chunks ahead of the elytra flight loaded.
             mc.options.simulationDistance().set(5);
             mc.options.renderDistance().set(4);
+            // A software-rendered client drawing as fast as it can starves the integrated server: on CI runners the
+            // 1.21.9+ server then can't finish preparing the spawn area within Fabric's one-minute world-load limit.
+            // Ticks don't depend on the frame rate, so the tests behave the same at 30 fps.
+            mc.options.framerateLimit().set(30);
             Compat.minimizeWindow(mc);
         });
     }
