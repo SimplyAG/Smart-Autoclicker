@@ -11,10 +11,15 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
+//? if >=1.21.11 {
 import net.minecraft.world.entity.animal.golem.AbstractGolem;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
+//?} else {
+/*import net.minecraft.world.entity.animal.AbstractGolem;
+import net.minecraft.world.entity.npc.AbstractVillager;
+*///?}
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
@@ -95,7 +100,7 @@ public class AutoAttackModule extends Module {
         if (target instanceof ArmorStand) return cfg.attackArmorStands;
         if (cfg.protectNamedAndTamed) {
             if (target.hasCustomName()) return false;
-            if (target instanceof OwnableEntity ownable && ownable.getOwnerReference() != null) return false;
+            if (target instanceof OwnableEntity ownable && Compat.hasOwner(ownable)) return false;
             if (target instanceof AbstractVillager || target instanceof AbstractGolem) return false;
         }
         return target instanceof Enemy ? cfg.attackHostiles : cfg.attackPassives;

@@ -4,6 +4,7 @@
 	"package": "com.simplyag.autoclicker.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"GameRendererMixin",
 		"KeyMappingAccessor",
 		"MinecraftMixin"
 	],

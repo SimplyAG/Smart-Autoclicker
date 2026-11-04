@@ -1,6 +1,6 @@
 # Smart Autoclicker
 
-Smart AFK automation for Minecraft **26.1 – 26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
+Smart AFK automation for Minecraft **1.21 – 1.21.11** and **26.1 – 26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
 
 ## Features
 
@@ -41,14 +41,14 @@ Change these under **Options → Controls → Key Binds → Smart Autoclicker**.
 
 1. Install [Fabric Loader](https://fabricmc.net/use/) 0.18.4+ (in Prism Launcher: *Edit instance → Version → Install Fabric*).
 2. Add [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft version.
-3. Add the jar for your Minecraft version to the `mods` folder, e.g. `smart-autoclicker-mc26.1-26.1.2-<version>.jar` for 26.1, 26.1.1 and 26.1.2.
+3. Add the jar for your Minecraft version to the `mods` folder, e.g. `smart-autoclicker-mc1.21.6-1.21.8-<version>.jar` for 1.21.6, 1.21.7 and 1.21.8. Each jar's name lists the first and last Minecraft version it covers.
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) for a config button in the mod list.
 
 Settings are saved to `config/smart-autoclicker.json`. Nothing starts automatically when you join a world.
 
 ## Build & test
 
-One source tree builds every supported Minecraft version with [Stonecutter](https://stonecutter.kikugie.dev/). Requires Java 25.
+One source tree builds every supported Minecraft version with [Stonecutter](https://stonecutter.kikugie.dev/). Requires JDK 21 (for 1.21.x) and JDK 25 (for 26.x).
 
 ```bash
 ./gradlew build verifyGroupClasses       # every version; jars in versions/<mc>/build/libs

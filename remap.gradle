@@ -1,0 +1,44 @@
+// Build script for the obfuscated Minecraft targets (1.21.x). Chosen per version in settings.gradle.
+// The mod's code uses Mojang names everywhere, so these targets compile against Mojang's official mappings and the
+// remapping Loom turns the result into the intermediary names Fabric runs on (remapJar). Java 21.
+
+plugins {
+	id 'dev.kikugie.stonecutter'
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+// Release groups and the jar allowlist; sets the ext.sac* values used below.
+apply from: rootProject.file('gradle/release-target.gradle')
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = "${project.archives_base_name}-mc${sacArchiveSuffix}"
+}
+
+repositories {
+	maven {
+		name = "TerraformersMC"
+		url = "https://maven.terraformersmc.com/releases/"
+		content { includeGroup "com.terraformersmc" }
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Optional: Mod Menu adds a config button. Not required at runtime.
+	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// 26.x ships JSpecify with the game; older Minecraft doesn't, and the mod's @Nullable annotations need it to
+	// compile. Annotations only: nothing from it is needed at runtime.
+	compileOnly "org.jspecify:jspecify:1.0.0"
+}
+
+// Resources, Java level, jar contents and the in-game tests: shared with build.gradle.
+apply from: rootProject.file('gradle/target-common.gradle')

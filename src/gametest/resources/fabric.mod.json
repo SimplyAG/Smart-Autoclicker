@@ -7,6 +7,9 @@
 	"entrypoints": {
 		"fabric-client-gametest": [
 			"com.simplyag.autoclicker.gametest.AutoClickerClientGameTest"
+		],
+		"client": [
+			"com.simplyag.autoclicker.gametest.HarnessEntrypoint"
 		]
 	},
 	"depends": {

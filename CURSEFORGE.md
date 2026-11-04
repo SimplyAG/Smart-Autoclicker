@@ -31,10 +31,10 @@ At <https://authors.curseforge.com> → **Create Project**:
 | Field | Value |
 |---|---|
 | Release type | **Beta** for the first release, then Release once it has had real-world use |
-| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.1.0: `smart-autoclicker-mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
+| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.2.0: `mc1.21-1.21.1` → 1.21, 1.21.1; `mc1.21.2-1.21.4` → 1.21.2, 1.21.3, 1.21.4; `mc1.21.5` → 1.21.5; `mc1.21.6-1.21.8` → 1.21.6, 1.21.7, 1.21.8; `mc1.21.9-1.21.10` → 1.21.9, 1.21.10; `mc1.21.11` → 1.21.11; `mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
 | Mod loader | Fabric |
 | Environment | Client |
-| Java | 25 |
+| Java | 21 for the 1.21.x jars, 25 for the 26.x jars |
 | Related projects | **Fabric API**: Required dependency. **Mod Menu**: Optional dependency |
 | Changelog | Paste from the section below |
 
@@ -84,11 +84,18 @@ Using the Freecam mod? Auto Attack and Mob Sweep keep working from where your ch
 **K** opens the control panel (or use Mod Menu). **Z** stops everything. **H** toggles Auto Walk. Every module and preset can have its own key in *Controls → Key Binds*.
 
 ### Requirements
-Minecraft 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu. Pick the file for your Minecraft version.
+Minecraft 1.21 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu. Pick the file for your Minecraft version.
 
 ⚠ **Only use this on servers that allow auto clickers and AFK automation.** It's client-side only.
 
 ---
+
+## Changelog for 1.2.0
+
+Now also for Minecraft 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10 and 1.21.11, with every feature.
+
+- 1.21.x on Fabric: six files cover the twelve versions (pick the one whose name includes your version)
+- No changes for players on 26.x
 
 ## Changelog for 1.1.0
 

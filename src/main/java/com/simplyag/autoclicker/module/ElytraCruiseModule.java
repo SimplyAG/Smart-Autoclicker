@@ -5,7 +5,6 @@ import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Inventories;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -78,7 +77,7 @@ public class ElytraCruiseModule extends Module {
 
         ItemStack elytra = player.getItemBySlot(EquipmentSlot.CHEST);
         int durability = Inventories.durabilityLeft(elytra);
-        if (elytra.has(DataComponents.GLIDER) && durability >= 0 && durability <= cfg.elytraMinDurability) {
+        if (Compat.isGlider(elytra) && durability >= 0 && durability <= cfg.elytraMinDurability) {
             stopWithReason(Component.translatable("smart-autoclicker.toast.elytra_worn", durability), true);
             return;
         }
@@ -163,12 +162,12 @@ public class ElytraCruiseModule extends Module {
             }
             return;
         }
-        int selected = player.getInventory().getSelectedSlot();
+        int selected = Compat.selectedSlot(player.getInventory());
         if (slot == selected) {
             fire(mc, player, InteractionHand.MAIN_HAND);
         } else {
             previousSlot = selected;
-            player.getInventory().setSelectedSlot(slot);
+            Compat.selectSlot(player.getInventory(), slot);
             rocketQueued = true; // fire next tick, once the slot change has reached the server
         }
     }
@@ -183,7 +182,7 @@ public class ElytraCruiseModule extends Module {
 
     private void restoreSlot(@Nullable LocalPlayer player) {
         if (player != null && previousSlot >= 0) {
-            player.getInventory().setSelectedSlot(previousSlot);
+            Compat.selectSlot(player.getInventory(), previousSlot);
         }
         previousSlot = -1;
     }

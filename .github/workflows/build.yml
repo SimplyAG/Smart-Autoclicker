@@ -29,7 +29,10 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          # 21 builds and runs the 1.21.x targets, 25 the 26.x ones and Gradle (the last one listed is the default).
+          java-version: |
+            21
+            25
       - uses: gradle/actions/setup-gradle@v5
       - run: chmod +x ./gradlew
       - run: ./gradlew build verifyGroupClasses --stacktrace
@@ -53,12 +56,36 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          # 21 builds and runs the 1.21.x targets, 25 the 26.x ones and Gradle (the last one listed is the default).
+          java-version: |
+            21
+            25
       - uses: gradle/actions/setup-gradle@v5
       - run: chmod +x ./gradlew
-      # Software rendering for the headless game, as Fabric API's own client game tests use.
-      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
-      - run: ./gradlew :${{ matrix.minecraft }}:runClientGameTest --stacktrace
+      # Software rendering for the headless game, as Fabric API's own client game tests use. 1.21.x renders with
+      # OpenGL through GLFW and needs a display, so it runs inside a virtual X server.
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libgl1-mesa-dri xvfb
+      - name: In-game tests
+        env:
+          MINECRAFT: ${{ matrix.minecraft }}
+        # Fabric's test world must finish loading within one minute of game ticks. On these software-rendered runners
+        # the 1.21.9+ integrated server sometimes stalls while preparing the spawn area and never gets there (the same
+        # versions load in about two seconds in other runs). Only that failure is retried, up to three attempts; any
+        # failing test fails the job straight away.
+        run: |
+          run_tests() {
+            if [[ "$MINECRAFT" == 1.* ]]; then
+              xvfb-run -a -s '-screen 0 1280x720x24' ./gradlew ":$MINECRAFT:runClientGameTest" --stacktrace
+            else
+              ./gradlew ":$MINECRAFT:runClientGameTest" --stacktrace
+            fi
+          }
+          for attempt in 1 2 3; do
+            if run_tests 2>&1 | tee test-output.log; [[ ${PIPESTATUS[0]} -eq 0 ]]; then exit 0; fi
+            if ! grep -q 'AssertionError: Timeout loading world' test-output.log; then exit 1; fi
+            echo "::warning::Minecraft $MINECRAFT: the test world didn't load in time (attempt $attempt of 3)"
+          done
+          exit 1
       - uses: actions/upload-artifact@v7
         if: always()
         with:

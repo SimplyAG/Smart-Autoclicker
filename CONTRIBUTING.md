@@ -3,7 +3,11 @@
 Smart Autoclicker is a [Stonecutter](https://stonecutter.kikugie.dev/) multi-version Fabric mod: one source tree,
 one Gradle project per Minecraft version (`versions/<mc>/gradle.properties`), and as few published jars as possible.
 
-You need JDK 25 (Gradle finds installed JDKs through toolchains).
+Two buildscripts share `gradle/target-common.gradle`: `build.gradle` for 26.x (unobfuscated, non-remapping Loom) and
+`remap.gradle` for 1.21.x (obfuscated: compiled against Mojang's official mappings, remapped to intermediary by
+`remapJar`). `settings.gradle` picks one per version. The code uses Mojang names everywhere.
+
+You need JDK 21 and JDK 25 (Gradle finds installed JDKs through toolchains): 1.21.x builds and runs on 21, 26.x on 25.
 
 ```bash
 ./gradlew :26.3:build                    # one version
@@ -15,8 +19,10 @@ You need JDK 25 (Gradle finds installed JDKs through toolchains).
 
 ## Version-specific code
 
-Everything that differs between Minecraft versions goes in `util/Compat.java` where possible, so a new version
-usually means changes there only. Branches are Stonecutter comments:
+Everything that differs between Minecraft versions goes in `util/Compat.java` where possible, and all drawing goes
+through `ui/Gfx.java` (`GuiGraphicsExtractor` from 26.1, `GuiGraphics` before, with the 1.21.6 render rewrite inside),
+so a new version usually means changes there only. Classes that implement a game interface whose methods changed
+(the control panel screen, the toast, the mixins) branch in place. Branches are Stonecutter comments:
 
 ```java
 //? if >=26.2 {
@@ -28,6 +34,19 @@ return mc.gui.screen();
 `src/` is checked out for the active version (`stonecutter.active` in `stonecutter.gradle`); the other versions build
 from generated copies. Switch the active version with `./gradlew "Set active project to 26.2"` before editing code
 for it, so your IDE checks the right branch.
+
+## In-game tests
+
+The tests themselves are in `src/gametest/.../SmartTests.java`, written against a small `TestClient` interface:
+
+- **1.21.4 and later**: Fabric API's client game-test API runs them (`AutoClickerClientGameTest`).
+- **1.21 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
+  mod's own harness (`src/harness`) into the test mod instead. It launches a normal dev client, creates a flat world
+  the way Fabric's test world builder does, runs the same tests and quits (exit code 1 on a failure). Differences: the
+  game isn't paused between test steps, and mouse clicks go straight to the open screen.
+
+Either way the task is `runClientGameTest`, the window is minimized and the game is muted, and screenshots land in
+`versions/<mc>/build/run/clientGameTest/screenshots/`. On Linux CI the 1.21.x game runs under `xvfb-run`.
 
 ## Release groups: as few jars as possible
 
@@ -41,7 +60,9 @@ A version may join a group only when both hold:
    is, class for class, the jar that version would have had.
 2. **`runClientGameTest` passes on it.**
 
-Every member compiles at the lead's Java level and with a fixed javac (toolchain), so the comparison is exact.
+Every member compiles at the lead's Java level and with a fixed javac (toolchain), so the comparison is exact. On
+remapped targets Loom writes the mixins' intermediary target names into the classes themselves (no refmap), so
+the comparison covers them too.
 `build` also runs `verifyJarContents`, which fails on anything in a jar outside the allowlist.
 
 ## Adding a new Minecraft version

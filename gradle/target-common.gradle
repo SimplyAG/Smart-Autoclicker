@@ -1,0 +1,96 @@
+// Everything both buildscripts share (build.gradle for 26.x, remap.gradle for the obfuscated 1.21.x targets):
+// in-game tests, resources, Java level and jar contents. Applied at the end of each.
+
+// In-game client tests: ./gradlew :26.3:runClientGameTest (creates a world, runs each feature, saves screenshots).
+// Fabric API's client game-test API exists from Minecraft 1.21.4. Older versions set fabric_client_gametest=false and
+// run the same tests through the mod's own harness instead (src/gametest/.../harness), in a normal dev client launched
+// by a run of the same name, so `runClientGameTest` works on every version.
+def fabricClientGameTests = (project.findProperty('fabric_client_gametest') ?: 'true') == 'true'
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "smart-autoclicker-gametest"
+		enableGameTests = false
+		enableClientGameTests = fabricClientGameTests
+		eula = true
+	}
+}
+if (!fabricClientGameTests) {
+	sourceSets.matching { it.name == 'gametest' }.configureEach { SourceSet gametest ->
+		// The harness only builds where Fabric's API is missing; the Fabric runner only where it exists.
+		gametest.java.srcDir rootProject.file('src/harness/java')
+		gametest.java.exclude 'com/simplyag/autoclicker/gametest/AutoClickerClientGameTest.java'
+		loom.runs.register('clientGameTest') {
+			client()
+			configName = 'Client Game Test (harness)'
+			source gametest
+			runDir = 'build/run/clientGameTest'
+			vmArg '-Dsmart-autoclicker.harness=true'
+		}
+	}
+	tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+		doFirst {
+			// A fresh, silent game: no onboarding or tutorial, sound off from the title screen on, no pause on alt-tab.
+			def dir = file('build/run/clientGameTest')
+			dir.mkdirs()
+			new File(dir, 'options.txt').text = ['onboardAccessibility:false', 'tutorialStep:none', 'narrator:0',
+					'joinedFirstServer:true', 'skipMultiplayerWarning:true', 'pauseOnLostFocus:false',
+					'soundCategory_master:0.0'].join('\n') + '\n'
+		}
+	}
+}
+
+// Every member of a release group compiles at the group lead's Java level, so its classes can be compared byte for
+// byte with the lead's and the lead's jar runs on all of them.
+def javaVersion = sacJavaVersion as int
+
+processResources {
+	inputs.property "version", project.version
+	inputs.property "minecraft_dep", sacMinecraftDepItems
+	inputs.property "java_version", javaVersion
+	inputs.property "loader_floor", project.loader_floor
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version,
+				"minecraft_dep": sacMinecraftDepItems,
+				"java_version": javaVersion,
+				"loader_floor": project.loader_floor
+	}
+
+	// The shared mixins.json says JAVA_21; Mixin refuses levels the running Java can't do, so set it per target.
+	filesMatching("smart-autoclicker.mixins.json") {
+		filter { String line -> line.replace('"JAVA_21"', "\"JAVA_${javaVersion}\"") }
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = javaVersion
+	it.options.encoding = "UTF-8"
+	// One fixed javac per target, whatever JDK runs Gradle: javac versions number lambdas differently, which would
+	// make otherwise identical classes differ between a group's members.
+	it.javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.toVersion(javaVersion)
+	targetCompatibility = JavaVersion.toVersion(javaVersion)
+}
+
+jar {
+	// Each version project has its own directory, so the license comes from the root.
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
+
+tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+	// The game runs on the target's Java, not whatever JDK runs Gradle.
+	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+	// gametest_disable_network_synchronizer=true in a version's gradle.properties: see the comment there.
+	if (project.findProperty('gametest_disable_network_synchronizer') == 'true') {
+		systemProperty 'fabric.client.gametest.disableNetworkSynchronizer', 'true'
+	}
+	// Test alongside another mod: -PtestMods=/absolute/path/to/mod.jar (e.g. Freecam)
+	if (project.hasProperty('testMods')) systemProperty 'fabric.addMods', project.property('testMods')
+}

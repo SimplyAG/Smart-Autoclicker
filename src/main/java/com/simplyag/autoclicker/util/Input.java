@@ -2,7 +2,6 @@ package com.simplyag.autoclicker.util;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.mixin.KeyMappingAccessor;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -46,10 +45,10 @@ public final class Input {
 
     /** Keyboard keys are checked directly; mouse buttons count as released (the next real click re-syncs them). */
     private static boolean isPhysicallyDown(KeyMapping key) {
-        InputConstants.Key bound = KeyMappingHelper.getBoundKeyOf(key);
+        InputConstants.Key bound = Compat.boundKey(key);
         if (bound.getType() != Compat.KEYBOARD || bound.getValue() == InputConstants.UNKNOWN.getValue()) {
             return false;
         }
-        return Minecraft.getInstance().getWindow().isFocused() && Compat.isKeyDown(Minecraft.getInstance(), bound.getValue());
+        return Compat.windowFocused(Minecraft.getInstance()) && Compat.isKeyDown(Minecraft.getInstance(), bound.getValue());
     }
 }

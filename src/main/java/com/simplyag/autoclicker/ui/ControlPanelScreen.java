@@ -13,14 +13,9 @@ import com.simplyag.autoclicker.ui.panel.Theme;
 import com.simplyag.autoclicker.util.Notifier;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -34,6 +29,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
+//? if >=26.1 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?} else {
+/*import net.minecraft.client.gui.GuiGraphics;
+*///?}
+//? if >=1.21.9 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 
 /**
  * The Smart Autoclicker control panel: a sidebar of pages (presets, each module, safety, general)
@@ -42,7 +46,6 @@ import java.util.function.IntConsumer;
  * Changes apply instantly and are saved when the panel closes.
  */
 public class ControlPanelScreen extends Screen {
-    private static final Identifier ICON = AutoClickerClient.id("icon.png");
     private static final String T = "smart-autoclicker.panel.";
     private static final int HEADER_H = 26;
     private static final int SIDEBAR_W = 124;
@@ -123,18 +126,47 @@ public class ControlPanelScreen extends Screen {
 
     // ------------------------------------------------------------------ rendering
 
+    //? if >=26.1 {
     @Override
-    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         if (minecraft.level == null) {
-            super.extractBackground(g, mouseX, mouseY, a);
+            super.extractBackground(graphics, mouseX, mouseY, a);
             return;
         }
-        extractBlurredBackground(g);
-        g.fill(0, 0, width, height, 0x80000000);
+        extractBlurredBackground(graphics);
+        graphics.fill(0, 0, width, height, 0x80000000);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        drawPanel(new Gfx(graphics), mouseX, mouseY);
+    }
+    //?} else {
+    /*@Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float a) {
+        if (minecraft.level == null) {
+            super.renderBackground(graphics, mouseX, mouseY, a);
+            return;
+        }
+        //? if >=1.21.6 {
+        renderBlurredBackground(graphics);
+        //?} else if >=1.21.2 {
+        /^renderBlurredBackground();
+        ^///?} else
+        /^renderBlurredBackground(a);^/
+        graphics.fill(0, 0, width, height, 0x80000000);
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
+        // Until 1.21.5 a screen draws its own background; from 1.21.6 the game does it before render().
+        //? if <1.21.6
+        /^renderBackground(graphics, mouseX, mouseY, a);^/
+        drawPanel(new Gfx(graphics), mouseX, mouseY);
+    }
+    *///?}
+
+    private void drawPanel(Gfx g, int mouseX, int mouseY) {
         long now = System.nanoTime();
         frameDelta = Math.min(0.1f, (now - lastFrame) / 1_000_000_000f);
         lastFrame = now;
@@ -155,18 +187,18 @@ public class ControlPanelScreen extends Screen {
 
         if (tooltip != null && dragging == null) {
             List<FormattedCharSequence> lines = font.split(tooltip, 220);
-            g.setTooltipForNextFrame(lines, mouseX, mouseY);
+            g.tooltip(font, lines, mouseX, mouseY);
         }
     }
 
-    private void drawHeader(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my) {
+    private void drawHeader(Gfx g, int x, int y, int w, int mx, int my) {
         Theme.round(g, x + 1, y + 1, w - 2, HEADER_H, Theme.HEADER);
         g.fill(x + 1, y + HEADER_H, x + w - 1, y + HEADER_H + 1, Theme.DIVIDER);
-        g.blit(RenderPipelines.GUI_TEXTURED, ICON, x + 6, y + 5, 0, 0, 16, 16, 128, 128, 128, 128);
-        g.text(font, title, x + 28, y + 9, Theme.TEXT, false);
+        g.modIcon(x + 6, y + 5, 16);
+        g.text(font, title, x + 28, y + 9, Theme.TEXT);
         String version = FabricLoader.getInstance().getModContainer(AutoClickerClient.MOD_ID)
                 .map(c -> "v" + c.getMetadata().getVersion().getFriendlyString()).orElse("");
-        g.text(font, version, x + 32 + font.width(title), y + 9, Theme.TEXT_FAINT, false);
+        g.text(font, version, x + 32 + font.width(title), y + 9, Theme.TEXT_FAINT);
 
         setClip(x, y, x + w, y + HEADER_H);
         int right = x + w - 6;
@@ -177,7 +209,7 @@ public class ControlPanelScreen extends Screen {
             int bx = right - bw;
             boolean hover = inside(mx, my, bx, y + 5, bw, 16);
             Theme.round(g, bx, y + 5, bw, 16, hover ? 0xFFB23A3A : 0xFF8C2D2D);
-            g.text(font, label, bx + 8, y + 9, Theme.TEXT, false);
+            g.text(font, label, bx + 8, y + 9, Theme.TEXT);
             addHit(bx, y + 5, bw, 16, ModuleManager::stopAllByUser);
             right = bx - 8;
 
@@ -186,14 +218,14 @@ public class ControlPanelScreen extends Screen {
                     session == null ? "0s" : Session.formatDuration(session.elapsedMillis()));
             int sw = font.width(summary);
             Theme.pill(g, right - sw - 8, y + 11, 4, 4, Theme.GOOD);
-            g.text(font, summary, right - sw, y + 9, Theme.GOOD, false);
+            g.text(font, summary, right - sw, y + 9, Theme.GOOD);
         } else {
             Component idle = Component.translatable(T + "idle");
-            g.text(font, idle, right - font.width(idle), y + 9, Theme.TEXT_FAINT, false);
+            g.text(font, idle, right - font.width(idle), y + 9, Theme.TEXT_FAINT);
         }
     }
 
-    private void drawSidebar(GuiGraphicsExtractor g, int x, int y, int h, int mx, int my) {
+    private void drawSidebar(Gfx g, int x, int y, int h, int mx, int my) {
         sidebarX0 = x + 1;
         sidebarY0 = y;
         sidebarX1 = x + SIDEBAR_W;
@@ -216,20 +248,20 @@ public class ControlPanelScreen extends Screen {
         g.disableScissor();
     }
 
-    private int sectionLabel(GuiGraphicsExtractor g, String key, int x, int y) {
-        g.text(font, Component.translatable(T + "section." + key), x + 10, y + 7, Theme.TEXT_FAINT, false);
+    private int sectionLabel(Gfx g, String key, int x, int y) {
+        g.text(font, Component.translatable(T + "section." + key), x + 10, y + 7, Theme.TEXT_FAINT);
         return y + 19;
     }
 
-    private void drawSidebarEntry(GuiGraphicsExtractor g, Page p, int x, int y, int w, int mx, int my) {
+    private void drawSidebarEntry(Gfx g, Page p, int x, int y, int w, int mx, int my) {
         boolean selected = p.equals(page);
         boolean hover = inside(mx, my, x, y, w, ENTRY_H);
         float sel = animate("side:" + p, selected ? 1 : 0);
         if (selected || sel > 0.01f) Theme.round(g, x, y, w, ENTRY_H, Theme.withAlpha(Theme.SELECTED, sel));
         if (hover && !selected) Theme.round(g, x, y, w, ENTRY_H, Theme.ROW_HOVER);
         if (selected) g.fill(x, y + 4, x + 2, y + ENTRY_H - 4, p.accent());
-        g.fakeItem(p.icon(), x + 5, y + 2);
-        g.text(font, p.name(), x + 25, y + 6, selected ? Theme.TEXT : Theme.TEXT_DIM, false);
+        g.item(p.icon(), x + 5, y + 2);
+        g.text(font, p.name(), x + 25, y + 6, selected ? Theme.TEXT : Theme.TEXT_DIM);
 
         boolean active = switch (p.kind()) {
             case MODULE -> p.module().isRunning();
@@ -240,7 +272,7 @@ public class ControlPanelScreen extends Screen {
         addHit(x, y, w, ENTRY_H, () -> selectPage(p));
     }
 
-    private void drawContent(GuiGraphicsExtractor g, int x, int y, int w, int h, int mx, int my) {
+    private void drawContent(Gfx g, int x, int y, int w, int h, int mx, int my) {
         contentX0 = x;
         contentY0 = y;
         contentX1 = x + w;
@@ -270,35 +302,35 @@ public class ControlPanelScreen extends Screen {
 
     // ------------------------------------------------------------------ pages
 
-    private int drawPageTitle(GuiGraphicsExtractor g, Component title, @Nullable Component subtitle, int x, int y, int w) {
-        g.pose().pushMatrix();
-        g.pose().translate(x, y);
-        g.pose().scale(1.5f, 1.5f);
-        g.text(font, title, 0, 0, Theme.TEXT, false);
-        g.pose().popMatrix();
+    private int drawPageTitle(Gfx g, Component title, @Nullable Component subtitle, int x, int y, int w) {
+        g.push();
+        g.translate(x, y);
+        g.scale(1.5f);
+        g.text(font, title, 0, 0, Theme.TEXT);
+        g.pop();
         y += 17;
         if (subtitle != null) {
             for (FormattedCharSequence line : font.split(subtitle, w)) {
-                g.text(font, line, x, y, Theme.TEXT_DIM, false);
+                g.text(font, line, x, y, Theme.TEXT_DIM);
                 y += 10;
             }
         }
         return y + 6;
     }
 
-    private int drawModulePage(GuiGraphicsExtractor g, Module module, int x, int y, int w, int mx, int my) {
+    private int drawModulePage(Gfx g, Module module, int x, int y, int w, int mx, int my) {
         boolean inWorld = minecraft.player != null;
-        g.pose().pushMatrix();
-        g.pose().translate(x, y);
-        g.pose().scale(2f, 2f);
-        g.fakeItem(module.icon(), 0, 0);
-        g.pose().popMatrix();
+        g.push();
+        g.translate(x, y);
+        g.scale(2f);
+        g.item(module.icon(), 0, 0);
+        g.pop();
 
-        g.pose().pushMatrix();
-        g.pose().translate(x + 40, y + 2);
-        g.pose().scale(1.5f, 1.5f);
-        g.text(font, module.name(), 0, 0, Theme.TEXT, false);
-        g.pose().popMatrix();
+        g.push();
+        g.translate(x + 40, y + 2);
+        g.scale(1.5f);
+        g.text(font, module.name(), 0, 0, Theme.TEXT);
+        g.pop();
 
         int statusY = y + 20;
         if (module.isRunning()) {
@@ -306,11 +338,11 @@ public class ControlPanelScreen extends Screen {
             Component status = module.status();
             Component text = status == null ? Component.translatable(T + "running_short")
                     : Component.translatable(T + "running_short").append(Component.literal(" · ")).append(status);
-            g.text(font, text, x + 48, statusY, Theme.GOOD, false);
+            g.text(font, text, x + 48, statusY, Theme.GOOD);
         } else if (!inWorld) {
-            g.text(font, Component.translatable(T + "join_world"), x + 40, statusY, Theme.WARN, false);
+            g.text(font, Component.translatable(T + "join_world"), x + 40, statusY, Theme.WARN);
         } else {
-            g.text(font, Component.translatable(T + "stopped"), x + 40, statusY, Theme.TEXT_FAINT, false);
+            g.text(font, Component.translatable(T + "stopped"), x + 40, statusY, Theme.TEXT_FAINT);
         }
 
         drawSwitch(g, "module:" + module.id(), x + w - 34, y + 8, 34, 16, module.isRunning(), inWorld, module.color(),
@@ -318,7 +350,7 @@ public class ControlPanelScreen extends Screen {
 
         y += 40;
         for (FormattedCharSequence line : font.split(module.description(), w)) {
-            g.text(font, line, x, y, Theme.TEXT_DIM, false);
+            g.text(font, line, x, y, Theme.TEXT_DIM);
             y += 10;
         }
         y = drawCompatibility(g, module, x, y + 4, w);
@@ -337,7 +369,7 @@ public class ControlPanelScreen extends Screen {
      * "Needs Auto Attack" / "Can't run with Hold Left Click, ..." under the description, and a warning
      * naming whatever is running now that turning this module on would stop.
      */
-    private int drawCompatibility(GuiGraphicsExtractor g, Module module, int x, int y, int w) {
+    private int drawCompatibility(Gfx g, Module module, int x, int y, int w) {
         List<Component> lines = new ArrayList<>();
         Module required = ModuleManager.requirementOf(module);
         if (required != null) lines.add(Component.translatable(T + "requires", required.name()));
@@ -345,21 +377,21 @@ public class ControlPanelScreen extends Screen {
         if (!conflicts.isEmpty()) lines.add(Component.translatable(T + "conflicts", Notifier.names(conflicts)));
         for (Component line : lines) {
             for (FormattedCharSequence part : font.split(line, w)) {
-                g.text(font, part, x, y, Theme.TEXT_FAINT, false);
+                g.text(font, part, x, y, Theme.TEXT_FAINT);
                 y += 10;
             }
         }
         List<Module> wouldStop = conflicts.stream().filter(Module::isRunning).toList();
         if (!module.isRunning() && !wouldStop.isEmpty()) {
             for (FormattedCharSequence part : font.split(Component.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
-                g.text(font, part, x, y, Theme.WARN, false);
+                g.text(font, part, x, y, Theme.WARN);
                 y += 10;
             }
         }
         return y;
     }
 
-    private int drawSettingsPage(GuiGraphicsExtractor g, String key, List<Setting> settings, int x, int y, int w, int mx, int my) {
+    private int drawSettingsPage(Gfx g, String key, List<Setting> settings, int x, int y, int w, int mx, int my) {
         y = drawPageTitle(g, Component.translatable(T + key), Component.translatable(T + key + ".desc"), x, y, w);
         g.fill(x, y, x + w, y + 1, Theme.DIVIDER);
         y += 6;
@@ -369,7 +401,7 @@ public class ControlPanelScreen extends Screen {
         return y;
     }
 
-    private int drawPresetsPage(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my) {
+    private int drawPresetsPage(Gfx g, int x, int y, int w, int mx, int my) {
         y = drawPageTitle(g, Component.translatable(T + "presets"), Component.translatable(T + "presets.desc"), x, y, w);
         int columns = w >= 2 * 140 + 6 ? 2 : 1;
         int cardW = columns == 2 ? (w - 6) / 2 : w;
@@ -383,12 +415,12 @@ public class ControlPanelScreen extends Screen {
         return y + rows * (cardH + 6);
     }
 
-    private void drawPresetCard(GuiGraphicsExtractor g, ModuleManager.Preset preset, int x, int y, int w, int h, int mx, int my) {
+    private void drawPresetCard(Gfx g, ModuleManager.Preset preset, int x, int y, int w, int h, int mx, int my) {
         boolean running = preset.isRunning();
         boolean hover = inside(mx, my, x, y, w, h);
         Theme.roundBordered(g, x, y, w, h, hover ? Theme.CARD_HOVER : Theme.CARD, running ? Theme.GOOD : Theme.DIVIDER);
-        g.fakeItem(new ItemStack(preset.icon()), x + 6, y + 6);
-        g.text(font, preset.name(), x + 26, y + 6, Theme.TEXT, false);
+        g.item(new ItemStack(preset.icon()), x + 6, y + 6);
+        g.text(font, preset.name(), x + 26, y + 6, Theme.TEXT);
 
         // Inline hotkey: "Key: none" -> click to bind
         KeyMapping key = AutoClickerClient.presetKey(preset);
@@ -396,13 +428,13 @@ public class ControlPanelScreen extends Screen {
         int kw = font.width(keyText);
         boolean keyHover = inside(mx, my, x + 26, y + 15, kw, 10);
         g.text(font, keyText, x + 26, y + 16, listening != null && listening == key ? Theme.WARN
-                : keyHover ? Theme.TEXT : Theme.TEXT_FAINT, false);
+                : keyHover ? Theme.TEXT : Theme.TEXT_FAINT);
         if (key != null) addHit(x + 26, y + 15, kw, 10, () -> listening = key);
 
         int ty = y + 30;
         List<FormattedCharSequence> lines = font.split(preset.description(), w - 12);
         for (int i = 0; i < Math.min(2, lines.size()); i++) {
-            g.text(font, lines.get(i), x + 6, ty, Theme.TEXT_DIM, false);
+            g.text(font, lines.get(i), x + 6, ty, Theme.TEXT_DIM);
             ty += 10;
         }
 
@@ -417,7 +449,7 @@ public class ControlPanelScreen extends Screen {
             List<Module> replaces = included ? List.of() : preset.wouldReplace(module);
             boolean chipHover = inside(mx, my, chipX, chipY, 17, 17);
             Theme.round(g, chipX, chipY, 17, 17, included ? Theme.withAlpha(module.color(), 0.45f) : Theme.CONTROL);
-            g.fakeItem(module.icon(), chipX, chipY);
+            g.item(module.icon(), chipX, chipY);
             if (!included) Theme.round(g, chipX, chipY, 17, 17, replaces.isEmpty() ? 0xB0121620 : 0xD8121620);
             if (!replaces.isEmpty()) {
                 for (int d = 0; d < 13; d++) g.fill(chipX + 2 + d, chipY + 14 - d, chipX + 4 + d, chipY + 15 - d, 0xC0FF6B6B);
@@ -442,7 +474,7 @@ public class ControlPanelScreen extends Screen {
         boolean bHover = usable && inside(mx, my, bx, by, bw, 15);
         int bg = !usable ? Theme.CONTROL : running ? (bHover ? 0xFFB23A3A : 0xFF8C2D2D) : (bHover ? 0xFF3E8F5F : 0xFF2F7049);
         Theme.round(g, bx, by, bw, 15, bg);
-        g.text(font, label, bx + 7, by + 4, usable ? Theme.TEXT : Theme.TEXT_FAINT, false);
+        g.text(font, label, bx + 7, by + 4, usable ? Theme.TEXT : Theme.TEXT_FAINT);
         if (usable) {
             addHit(bx, by, bw, 15, () -> {
                 if (running) {
@@ -456,7 +488,7 @@ public class ControlPanelScreen extends Screen {
 
     // ------------------------------------------------------------------ rows & controls
 
-    private int drawRow(GuiGraphicsExtractor g, Setting setting, int x, int y, int w, int accent, int mx, int my) {
+    private int drawRow(Gfx g, Setting setting, int x, int y, int w, int accent, int mx, int my) {
         boolean enabled = setting.enabled().getAsBoolean();
         boolean rowHover = inside(mx, my, x - 4, y, w + 8, ROW_H) && inClip(mx, my);
         if (rowHover) {
@@ -464,7 +496,7 @@ public class ControlPanelScreen extends Screen {
             if (mx < x + w - CONTROL_W - 4) tooltip = setting.tooltip();
         }
         String label = font.plainSubstrByWidth(setting.label().getString(), w - CONTROL_W - 8);
-        g.text(font, label, x, y + 6, enabled ? Theme.TEXT : Theme.TEXT_FAINT, false);
+        g.text(font, label, x, y + 6, enabled ? Theme.TEXT : Theme.TEXT_FAINT);
 
         int right = x + w;
         int cy = y + 2;
@@ -478,7 +510,7 @@ public class ControlPanelScreen extends Screen {
         return y + ROW_H;
     }
 
-    private void drawSwitch(GuiGraphicsExtractor g, String key, int x, int y, int w, int h, boolean on, boolean enabled,
+    private void drawSwitch(Gfx g, String key, int x, int y, int w, int h, boolean on, boolean enabled,
                             int color, int mx, int my, Runnable toggle) {
         float t = animate(key, on ? 1 : 0);
         boolean hover = enabled && inside(mx, my, x, y, w, h) && inClip(mx, my);
@@ -491,11 +523,11 @@ public class ControlPanelScreen extends Screen {
         if (enabled) addHit(x, y, w, h, toggle);
     }
 
-    private void drawSlider(GuiGraphicsExtractor g, Setting.Range r, int x, int y, boolean enabled, int accent, int mx, int my) {
+    private void drawSlider(Gfx g, Setting.Range r, int x, int y, boolean enabled, int accent, int mx, int my) {
         float f = (float) r.fraction();
         float shown = animate("slider:" + r.id(), f);
         String value = r.format().apply(r.get().getAsInt());
-        g.text(font, value, x - 8 - font.width(value), y + 6, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT, false);
+        g.text(font, value, x - 8 - font.width(value), y + 6, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT);
 
         int trackY = y + 8;
         Theme.pill(g, x, trackY, SLIDER_W, 4, Theme.TRACK);
@@ -511,20 +543,20 @@ public class ControlPanelScreen extends Screen {
         }
     }
 
-    private void drawChoice(GuiGraphicsExtractor g, Setting.Choice<?> c, int x, int y, boolean enabled, int mx, int my) {
+    private void drawChoice(Gfx g, Setting.Choice<?> c, int x, int y, boolean enabled, int mx, int my) {
         boolean hover = enabled && inside(mx, my, x, y, CONTROL_W, 16) && inClip(mx, my);
         Theme.roundBordered(g, x, y, CONTROL_W, 16, hover ? Theme.CONTROL_HOVER : Theme.CONTROL, Theme.DIVIDER);
         int textColor = enabled ? Theme.TEXT : Theme.TEXT_FAINT;
         g.centeredText(font, c.valueLabel(), x + CONTROL_W / 2, y + 4, textColor);
-        g.text(font, "‹", x + 5, y + 4, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT, false);
-        g.text(font, "›", x + CONTROL_W - 9, y + 4, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT, false);
+        g.text(font, "‹", x + 5, y + 4, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT);
+        g.text(font, "›", x + CONTROL_W - 9, y + 4, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT);
         if (enabled) {
             addClipped(clipped(x, y, CONTROL_W / 2, 16, () -> c.cycle(-1), null, c::cycle));
             addClipped(clipped(x + CONTROL_W / 2, y, CONTROL_W - CONTROL_W / 2, 16, () -> c.cycle(1), null, c::cycle));
         }
     }
 
-    private void drawHotkey(GuiGraphicsExtractor g, @Nullable KeyMapping key, int x, int y, boolean enabled, int mx, int my) {
+    private void drawHotkey(Gfx g, @Nullable KeyMapping key, int x, int y, boolean enabled, int mx, int my) {
         boolean waiting = key != null && listening == key;
         boolean hover = key != null && inside(mx, my, x, y, CONTROL_W, 16) && inClip(mx, my);
         Theme.roundBordered(g, x, y, CONTROL_W, 16, hover || waiting ? Theme.CONTROL_HOVER : Theme.CONTROL,
@@ -541,41 +573,104 @@ public class ControlPanelScreen extends Screen {
     }
 
     // ------------------------------------------------------------------ input
+    // Minecraft hands screens event objects from 1.21.9 and raw numbers before; both feed the same handlers below.
 
+    //? if >=1.21.9 {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (listening != null) {
-            listening = null; // clicking anywhere cancels key binding
-            return true;
-        }
-        for (int i = hits.size() - 1; i >= 0; i--) {
-            Hit hit = hits.get(i);
-            if (!hit.contains(event.x(), event.y())) continue;
-            if (hit.drag() != null) {
-                dragging = hit.drag();
-                dragging.accept(event.x());
-            } else if (hit.click() != null) {
-                hit.click().run();
-            }
-            playClick();
-            return true;
-        }
-        return super.mouseClicked(event, doubleClick);
+        return click(event.x(), event.y()) || super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (dragging != null) {
-            dragging.accept(event.x());
-            return true;
-        }
-        return super.mouseDragged(event, dx, dy);
+        return drag(event.x()) || super.mouseDragged(event, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         dragging = null;
         return super.mouseReleased(event);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        KeyMapping openKey = AutoClickerClient.openPanelKey();
+        return key(event.key(), event.isEscape(), InputConstants.getKey(event), openKey != null && openKey.matches(event))
+                || super.keyPressed(event);
+    }
+    //?} else {
+    /*@Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return click(mouseX, mouseY) || super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        return drag(mouseX) || super.mouseDragged(mouseX, mouseY, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        dragging = null;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        KeyMapping openKey = AutoClickerClient.openPanelKey();
+        return key(keyCode, keyCode == InputConstants.KEY_ESCAPE, InputConstants.getKey(keyCode, scanCode),
+                openKey != null && openKey.matches(keyCode, scanCode))
+                || super.keyPressed(keyCode, scanCode, modifiers);
+    }
+    *///?}
+
+    private boolean click(double x, double y) {
+        if (listening != null) {
+            listening = null; // clicking anywhere cancels key binding
+            return true;
+        }
+        for (int i = hits.size() - 1; i >= 0; i--) {
+            Hit hit = hits.get(i);
+            if (!hit.contains(x, y)) continue;
+            if (hit.drag() != null) {
+                dragging = hit.drag();
+                dragging.accept(x);
+            } else if (hit.click() != null) {
+                hit.click().run();
+            }
+            playClick();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean drag(double x) {
+        if (dragging == null) return false;
+        dragging.accept(x);
+        return true;
+    }
+
+    /** True if the panel used the key press. */
+    private boolean key(int keyCode, boolean escape, InputConstants.Key pressed, boolean isOpenPanelKey) {
+        if (listening != null) {
+            listening.setKey(escape ? InputConstants.UNKNOWN : pressed);
+            KeyMapping.resetMapping();
+            minecraft.options.save();
+            listening = null;
+            playClick();
+            return true;
+        }
+        if (isOpenPanelKey) {
+            onClose();
+            return true;
+        }
+        // Up/down arrows move between pages
+        if (keyCode == InputConstants.KEY_DOWN || keyCode == InputConstants.KEY_UP) {
+            int index = pages.indexOf(page) + (keyCode == InputConstants.KEY_DOWN ? 1 : -1);
+            selectPage(pages.get(Math.floorMod(index, pages.size())));
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -593,30 +688,6 @@ public class ControlPanelScreen extends Screen {
             scroll = Mth.clamp(scroll - scrollY * 20, 0, maxScroll);
         }
         return true;
-    }
-
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        if (listening != null) {
-            listening.setKey(event.isEscape() ? InputConstants.UNKNOWN : InputConstants.getKey(event));
-            KeyMapping.resetMapping();
-            minecraft.options.save();
-            listening = null;
-            playClick();
-            return true;
-        }
-        KeyMapping openKey = AutoClickerClient.openPanelKey();
-        if (openKey != null && openKey.matches(event)) {
-            onClose();
-            return true;
-        }
-        // Up/down arrows move between pages
-        if (event.key() == InputConstants.KEY_DOWN || event.key() == InputConstants.KEY_UP) {
-            int index = pages.indexOf(page) + (event.key() == InputConstants.KEY_DOWN ? 1 : -1);
-            selectPage(pages.get(Math.floorMod(index, pages.size())));
-            return true;
-        }
-        return super.keyPressed(event);
     }
 
     @Override

@@ -181,6 +181,11 @@ public final class ModuleManager {
     private ModuleManager() {
     }
 
+    /** Whether alt-tabbing should leave the game running instead of opening the pause menu. */
+    public static boolean keepRunningUnfocused() {
+        return SmartConfig.get().keepRunningWhenUnfocused && anyRunning();
+    }
+
     public static boolean anyRunning() {
         for (Module module : ALL) {
             if (module.isRunning()) return true;

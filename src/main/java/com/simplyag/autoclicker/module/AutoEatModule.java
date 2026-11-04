@@ -146,13 +146,13 @@ public class AutoEatModule extends Module {
 
         foodFound(player);
         hand = InteractionHand.MAIN_HAND;
-        int selected = player.getInventory().getSelectedSlot();
+        int selected = Compat.selectedSlot(player.getInventory());
         if (slot == selected) {
             previousSlot = -1;
             state = State.START;
         } else {
             previousSlot = selected;
-            player.getInventory().setSelectedSlot(slot);
+            Compat.selectSlot(player.getInventory(), slot);
             state = State.SWITCHED; // give the slot change a tick to reach the server
         }
     }
@@ -169,7 +169,7 @@ public class AutoEatModule extends Module {
 
     private void restoreSlot(@Nullable LocalPlayer player) {
         if (player != null && previousSlot >= 0) {
-            player.getInventory().setSelectedSlot(previousSlot);
+            Compat.selectSlot(player.getInventory(), previousSlot);
         }
         previousSlot = -1;
     }
