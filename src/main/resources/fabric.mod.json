@@ -8,7 +8,9 @@
 		"SimplyAG"
 	],
 	"contact": {
-		"homepage": "https://www.curseforge.com/minecraft/mc-mods/smart-autoclicker"
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/smart-autoclicker",
+		"sources": "https://github.com/SimplyAG/Smart-Autoclicker",
+		"issues": "https://github.com/SimplyAG/Smart-Autoclicker/issues"
 	},
 	"license": "MIT",
 	"icon": "assets/smart-autoclicker/icon.png",

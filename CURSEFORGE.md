@@ -17,10 +17,10 @@ At <https://authors.curseforge.com> → **Create Project**:
 | Other categories | Automation, Fabric |
 | License | MIT |
 | Avatar | `src/main/resources/assets/smart-autoclicker/icon.png` (128×128) |
+| Source | https://github.com/SimplyAG/Smart-Autoclicker |
+| Issues | https://github.com/SimplyAG/Smart-Autoclicker/issues |
 
-**Source and Issues links:** leave empty until the code is on GitHub, then add them here and to `contact` in `src/main/resources/fabric.mod.json`.
-
-**Screenshots:** take a few in a real world with F2: the control panel (K), the Presets page, the status HUD while grinding, and a toast. `./gradlew runClientGameTest` also saves test screenshots to `build/run/clientGameTest/screenshots/`.
+**Screenshots:** take a few in a real world with F2: the control panel (K), the Presets page, the status HUD while grinding, and a toast. `./gradlew runClientGameTest` also saves test screenshots to `versions/<mc>/build/run/clientGameTest/screenshots/`.
 
 ## Upload a file (each release)
 
