@@ -74,7 +74,7 @@ public class AutoEatModule extends Module {
         foodLeft = Inventories.countFood(player);
 
         // Creative players don't get hungry; Hold Right already eats whatever is in hand.
-        if (player.hasInfiniteMaterials() || ModuleManager.HOLD_USE.isRunning()) return;
+        if (Compat.hasInfiniteMaterials(player) || ModuleManager.HOLD_USE.isRunning()) return;
         // Menus stop key handling; finish up quietly if the eat ended meanwhile.
         if (Compat.screen(mc) != null) {
             if (state == State.EATING && !player.isUsingItem()) finishEating(mc, player);

@@ -8,7 +8,7 @@ players are there.
 |---|---|---|
 | 1 | 26.1 – 26.3 | **Done**: 3 jars (26.1–26.1.2 share one), in-game tests on every version |
 | 2 | 1.21 – 1.21.11 | **Done**: 6 jars for the 12 versions, in-game tests on every version (Fabric's game tests from 1.21.4, the mod's own harness before) |
-| 3 | 1.20.x | Planned |
+| 3 | 1.20 – 1.20.6 | **Done**: 4 jars for the 7 versions, in-game tests on every version (the mod's own harness) |
 | 4 | 1.17 – 1.19.4 | Planned |
 | 5 | 1.14.4 – 1.16.5 | Planned |
 
@@ -27,7 +27,10 @@ most classes keep their names; the work is in APIs that changed. The main breaks
 | 1.21.5 → 1.21.4 | Selected hotbar slot is a field, not `getSelectedSlot()`; owners are a UUID, not an `EntityReference`. |
 | 1.21.4 → 1.21.3 | No Fabric client game-test API: the same tests run through the mod's own harness (`src/harness`) in a normal dev client instead. |
 | 1.21.2 → 1.21.1 | Old toast interface (`ToastComponent`, one `render` that returns visibility); no `GLIDER` component (elytra only); blur takes the partial tick; `blit` without a render type. |
-| 1.20.5 → 1.20.4 | Items use NBT, not data components (food, durability checks). Java 17. |
+| 1.21 → 1.20.6 | Fabric's HUD callback passes a float, not a `DeltaTracker`, so 1.20.x and 1.21.x can't share a jar. |
+| 1.20.5 → 1.20.4 | Food from `Item.getFoodProperties()`, not data components; no `entityInteractionRange`/`hasInfiniteMaterials`; no menu blur. **Java 17**: no pattern `switch`, no `Math.clamp` (shared code avoids both). |
+| 1.20.3 → 1.20.2 | No `MutableComponent.withColor`; `/summon` names are JSON text in quotes (tests). |
+| 1.20.2 → 1.20.1 | `Screen.renderBackground(GuiGraphics)` and `mouseScrolled(x, y, delta)` take fewer arguments. |
 | 1.20 → 1.19.4 | No `GuiGraphics`: drawing goes through `PoseStack` and `GuiComponent`. |
 | 1.17 → 1.16.5 | **Java 8**: records, sealed interfaces, pattern-matching `switch` and `instanceof` patterns must be rewritten as plain classes. Plan this as its own refactor before phase 5. |
 

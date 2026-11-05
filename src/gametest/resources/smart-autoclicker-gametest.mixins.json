@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.simplyag.autoclicker.gametest.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"client": [
+		"QuietWindowMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

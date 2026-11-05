@@ -143,24 +143,34 @@ public class ControlPanelScreen extends Screen {
     }
     //?} else {
     /*@Override
+    //? if >=1.20.2 {
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float a) {
+    //?} else
+    /^public void renderBackground(GuiGraphics graphics) {^/
         if (minecraft.level == null) {
+            //? if >=1.20.2 {
             super.renderBackground(graphics, mouseX, mouseY, a);
+            //?} else
+            /^super.renderBackground(graphics);^/
             return;
         }
+        // The blurred world behind menus exists from 1.20.5; before it the dimmed world shows through.
         //? if >=1.21.6 {
         renderBlurredBackground(graphics);
         //?} else if >=1.21.2 {
         /^renderBlurredBackground();
-        ^///?} else
-        /^renderBlurredBackground(a);^/
+        ^///?} else if >=1.20.5 {
+        /^renderBlurredBackground(a);
+        ^///?}
         graphics.fill(0, 0, width, height, 0x80000000);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
         // Until 1.21.5 a screen draws its own background; from 1.21.6 the game does it before render().
-        //? if <1.21.6
+        //? if <1.20.2 {
+        /^renderBackground(graphics);
+        ^///?} else if <1.21.6
         /^renderBackground(graphics, mouseX, mouseY, a);^/
         drawPanel(new Gfx(graphics), mouseX, mouseY);
     }
@@ -500,12 +510,16 @@ public class ControlPanelScreen extends Screen {
 
         int right = x + w;
         int cy = y + 2;
-        switch (setting) {
-            case Setting.Toggle t -> drawSwitch(g, "toggle:" + t.id(), right - 26, y + 4, 26, 12, t.get().getAsBoolean(), enabled,
+        // instanceof rather than a pattern switch: Java 17 (Minecraft before 1.20.5) has no pattern switches.
+        if (setting instanceof Setting.Toggle t) {
+            drawSwitch(g, "toggle:" + t.id(), right - 26, y + 4, 26, 12, t.get().getAsBoolean(), enabled,
                     accent, mx, my, () -> t.set().accept(!t.get().getAsBoolean()));
-            case Setting.Range r -> drawSlider(g, r, right - SLIDER_W, y, enabled, accent, mx, my);
-            case Setting.Choice<?> c -> drawChoice(g, c, right - CONTROL_W, cy, enabled, mx, my);
-            case Setting.Hotkey k -> drawHotkey(g, k.key().get(), right - CONTROL_W, cy, enabled, mx, my);
+        } else if (setting instanceof Setting.Range r) {
+            drawSlider(g, r, right - SLIDER_W, y, enabled, accent, mx, my);
+        } else if (setting instanceof Setting.Choice<?> c) {
+            drawChoice(g, c, right - CONTROL_W, cy, enabled, mx, my);
+        } else if (setting instanceof Setting.Hotkey k) {
+            drawHotkey(g, k.key().get(), right - CONTROL_W, cy, enabled, mx, my);
         }
         return y + ROW_H;
     }
@@ -539,7 +553,7 @@ public class ControlPanelScreen extends Screen {
         if (enabled) {
             DoubleConsumer set = mouseX -> r.set().accept(r.valueAt((mouseX - x - 3) / (SLIDER_W - 6)));
             addClipped(clipped(x - 3, y + 2, SLIDER_W + 6, 16, null, set,
-                    dir -> r.set().accept(Math.clamp(r.get().getAsInt() + dir * r.step(), r.min(), r.max()))));
+                    dir -> r.set().accept(Mth.clamp(r.get().getAsInt() + dir * r.step(), r.min(), r.max()))));
         }
     }
 
@@ -674,7 +688,10 @@ public class ControlPanelScreen extends Screen {
     }
 
     @Override
+    //? if >=1.20.2 {
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+    //?} else
+    /*public boolean mouseScrolled(double x, double y, double scrollY) {*/
         for (int i = hits.size() - 1; i >= 0; i--) {
             Hit hit = hits.get(i);
             if (hit.wheel() != null && hit.contains(x, y)) {

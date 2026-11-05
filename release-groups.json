@@ -6,6 +6,10 @@
     "Every member compiles at the lead's Java level so the comparison is exact. Never list an untested version."
   ],
   "groups": [
+    { "minecraft": ["1.20", "1.20.1"] },
+    { "minecraft": ["1.20.2"] },
+    { "minecraft": ["1.20.3", "1.20.4"] },
+    { "minecraft": ["1.20.5", "1.20.6"] },
     { "minecraft": ["1.21", "1.21.1"] },
     { "minecraft": ["1.21.2", "1.21.3", "1.21.4"] },
     { "minecraft": ["1.21.5"] },

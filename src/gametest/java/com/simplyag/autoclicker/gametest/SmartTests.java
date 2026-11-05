@@ -293,7 +293,7 @@ public final class SmartTests {
 
     /** Armor stands are off limits until the option is on, and a name does not protect them then. */
     private static void testArmorStands(TestClient context, TestClient.Server server) {
-        server.runCommand("execute as @p at @p run summon armor_stand ^ ^ ^2 {NoGravity:1b,CustomName:\"Target\"}");
+        server.runCommand("execute as @p at @p run summon armor_stand ^ ^ ^2 {NoGravity:1b,CustomName:" + customName("Target") + "}");
         context.waitTicks(10);
         context.runOnClient(mc -> ModuleManager.AUTO_ATTACK.start(false));
         context.waitTicks(40);
@@ -308,7 +308,7 @@ public final class SmartTests {
     }
 
     private static void testProtectsNamedMobs(TestClient context, TestClient.Server server) {
-        server.runCommand("execute as @p at @p run summon husk ^ ^ ^2 {NoAI:1b,CustomName:\"Bob\"}");
+        server.runCommand("execute as @p at @p run summon husk ^ ^ ^2 {NoAI:1b,CustomName:" + customName("Bob") + "}");
         context.waitTicks(10);
         context.runOnClient(mc -> ModuleManager.AUTO_ATTACK.start(false));
         context.waitTicks(60);
@@ -443,6 +443,14 @@ public final class SmartTests {
         return server.overworld().getEntities(EntityTypes.HUSK, e -> e.isAlive()).size();
         //?} else
         /*return server.overworld().getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+    }
+
+    /** A CustomName value for /summon: a plain string from 1.20.3, a JSON text component in quotes before. */
+    private static String customName(String name) {
+        //? if >=1.20.3 {
+        return "\"" + name + "\"";
+        //?} else
+        /*return "'\"" + name + "\"'";*/
     }
 
     private static void check(boolean condition, String message) {

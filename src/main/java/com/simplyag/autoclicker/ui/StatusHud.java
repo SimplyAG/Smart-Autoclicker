@@ -37,7 +37,7 @@ public final class StatusHud {
             if (!module.isRunning()) continue;
             Component status = module.status();
             lines.add(new Line(module, status == null ? module.name()
-                    : Component.empty().append(module.name()).append(Component.literal("  ").append(status).withColor(Theme.TEXT_DIM))));
+                    : Component.empty().append(module.name()).append(Compat.withColor(Component.literal("  ").append(status), Theme.TEXT_DIM))));
         }
 
         int width = 8 + font.width(header);

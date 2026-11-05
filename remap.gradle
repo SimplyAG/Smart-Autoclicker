@@ -32,8 +32,10 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Optional: Mod Menu adds a config button. Not required at runtime.
-	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
-	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+	// Not transitive: some Mod Menu releases list a dependency (Placeholder API) that isn't on any public maven, and
+	// Mod Menu bundles what it needs to run.
+	modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+	modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
 
 	// 26.x ships JSpecify with the game; older Minecraft doesn't, and the mod's @Nullable annotations need it to
 	// compile. Annotations only: nothing from it is needed at runtime.
