@@ -18,7 +18,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+//? if >=1.16.2 {
 import net.minecraft.util.FormattedCharSequence;
+//?} else
+/*import com.simplyag.autoclicker.ui.legacy.FormattedCharSequence;*/
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -37,9 +40,10 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?} else if >=1.20 {
 /*import net.minecraft.client.gui.GuiGraphics;
 *///?} else {
-/*import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.gui.GuiComponent;
+/*import net.minecraft.client.gui.GuiComponent;
 *///?}
+//? if >=1.16 <1.20
+/*import com.mojang.blaze3d.vertex.PoseStack;*/
 //? if >=1.21.9 {
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -235,7 +239,7 @@ public class ControlPanelScreen extends Screen {
         /^renderBackground(graphics, mouseX, mouseY, a);^/
         drawPanel(new Gfx(graphics), mouseX, mouseY);
     }
-    *///?} else {
+    *///?} else if >=1.16 {
     /*// Before 1.20 screens draw with a PoseStack and paint their own background.
     @Override
     public void renderBackground(PoseStack pose) {
@@ -250,6 +254,22 @@ public class ControlPanelScreen extends Screen {
     public void render(PoseStack pose, int mouseX, int mouseY, float a) {
         renderBackground(pose);
         drawPanel(new Gfx(pose), mouseX, mouseY);
+    }
+    *///?} else {
+    /*// Before 1.16 there is no pose: drawing uses the fixed-function matrix directly.
+    @Override
+    public void renderBackground() {
+        if (minecraft.level == null) {
+            super.renderBackground();
+            return;
+        }
+        GuiComponent.fill(0, 0, width, height, 0x80000000);
+    }
+
+    @Override
+    public void render(int mouseX, int mouseY, float a) {
+        renderBackground();
+        drawPanel(new Gfx(), mouseX, mouseY);
     }
     *///?}
 
@@ -273,7 +293,7 @@ public class ControlPanelScreen extends Screen {
         drawContent(g, x + SIDEBAR_W + 1, y + HEADER_H + 1, w - SIDEBAR_W - 2, h - HEADER_H - 2, mouseX, mouseY);
 
         if (tooltip != null && dragging == null) {
-            List<FormattedCharSequence> lines = font.split(tooltip, 220);
+            List<FormattedCharSequence> lines = Gfx.split(font, tooltip, 220);
             g.tooltip(font, lines, mouseX, mouseY);
         }
     }
@@ -285,14 +305,14 @@ public class ControlPanelScreen extends Screen {
         g.text(font, title, x + 28, y + 9, Theme.TEXT);
         String version = FabricLoader.getInstance().getModContainer(AutoClickerClient.MOD_ID)
                 .map(c -> "v" + c.getMetadata().getVersion().getFriendlyString()).orElse("");
-        g.text(font, version, x + 32 + font.width(title), y + 9, Theme.TEXT_FAINT);
+        g.text(font, version, x + 32 + Gfx.width(font, title), y + 9, Theme.TEXT_FAINT);
 
         setClip(x, y, x + w, y + HEADER_H);
         int right = x + w - 6;
         long running = ModuleManager.ALL.stream().filter(Module::isRunning).count();
         if (running > 0) {
             Component label = Compat.translatable(T + "stop_all");
-            int bw = font.width(label) + 16;
+            int bw = Gfx.width(font, label) + 16;
             int bx = right - bw;
             boolean hover = inside(mx, my, bx, y + 5, bw, 16);
             Theme.round(g, bx, y + 5, bw, 16, hover ? 0xFFB23A3A : 0xFF8C2D2D);
@@ -303,12 +323,12 @@ public class ControlPanelScreen extends Screen {
             Session session = ModuleManager.session();
             Component summary = Compat.translatable(T + "running", running,
                     session == null ? "0s" : Session.formatDuration(session.elapsedMillis()));
-            int sw = font.width(summary);
+            int sw = Gfx.width(font, summary);
             Theme.pill(g, right - sw - 8, y + 11, 4, 4, Theme.GOOD);
             g.text(font, summary, right - sw, y + 9, Theme.GOOD);
         } else {
             Component idle = Compat.translatable(T + "idle");
-            g.text(font, idle, right - font.width(idle), y + 9, Theme.TEXT_FAINT);
+            g.text(font, idle, right - Gfx.width(font, idle), y + 9, Theme.TEXT_FAINT);
         }
     }
 
@@ -403,7 +423,7 @@ public class ControlPanelScreen extends Screen {
         g.pop();
         y += 17;
         if (subtitle != null) {
-            for (FormattedCharSequence line : font.split(subtitle, w)) {
+            for (FormattedCharSequence line : Gfx.split(font, subtitle, w)) {
                 g.text(font, line, x, y, Theme.TEXT_DIM);
                 y += 10;
             }
@@ -442,7 +462,7 @@ public class ControlPanelScreen extends Screen {
                 mx, my, module::toggle);
 
         y += 40;
-        for (FormattedCharSequence line : font.split(module.description(), w)) {
+        for (FormattedCharSequence line : Gfx.split(font, module.description(), w)) {
             g.text(font, line, x, y, Theme.TEXT_DIM);
             y += 10;
         }
@@ -469,14 +489,14 @@ public class ControlPanelScreen extends Screen {
         List<Module> conflicts = ModuleManager.conflictsOf(module);
         if (!conflicts.isEmpty()) lines.add(Compat.translatable(T + "conflicts", Notifier.names(conflicts)));
         for (Component line : lines) {
-            for (FormattedCharSequence part : font.split(line, w)) {
+            for (FormattedCharSequence part : Gfx.split(font, line, w)) {
                 g.text(font, part, x, y, Theme.TEXT_FAINT);
                 y += 10;
             }
         }
         List<Module> wouldStop = conflicts.stream().filter(Module::isRunning).collect(Collectors.toList());
         if (!module.isRunning() && !wouldStop.isEmpty()) {
-            for (FormattedCharSequence part : font.split(Compat.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
+            for (FormattedCharSequence part : Gfx.split(font, Compat.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
                 g.text(font, part, x, y, Theme.WARN);
                 y += 10;
             }
@@ -518,14 +538,14 @@ public class ControlPanelScreen extends Screen {
         // Inline hotkey: "Key: none" -> click to bind
         KeyMapping key = AutoClickerClient.presetKey(preset);
         Component keyText = keyLabel(key, true);
-        int kw = font.width(keyText);
+        int kw = Gfx.width(font, keyText);
         boolean keyHover = inside(mx, my, x + 26, y + 15, kw, 10);
         g.text(font, keyText, x + 26, y + 16, listening != null && listening == key ? Theme.WARN
                 : keyHover ? Theme.TEXT : Theme.TEXT_FAINT);
         if (key != null) addHit(x + 26, y + 15, kw, 10, () -> listening = key);
 
         int ty = y + 30;
-        List<FormattedCharSequence> lines = font.split(preset.description(), w - 12);
+        List<FormattedCharSequence> lines = Gfx.split(font, preset.description(), w - 12);
         for (int i = 0; i < Math.min(2, lines.size()); i++) {
             g.text(font, lines.get(i), x + 6, ty, Theme.TEXT_DIM);
             ty += 10;
@@ -561,7 +581,7 @@ public class ControlPanelScreen extends Screen {
         // Start / stop button, top right so the chips get the full width
         boolean usable = minecraft.player != null && !preset.modules().isEmpty();
         Component label = Compat.translatable(running ? T + "preset.stop" : T + "preset.start");
-        int bw = font.width(label) + 14;
+        int bw = Gfx.width(font, label) + 14;
         int bx = x + w - bw - 6;
         int by = y + 6;
         boolean bHover = usable && inside(mx, my, bx, by, bw, 15);
@@ -588,7 +608,7 @@ public class ControlPanelScreen extends Screen {
             Theme.round(g, x - 4, y, w + 8, ROW_H, Theme.ROW_HOVER);
             if (mx < x + w - CONTROL_W - 4) tooltip = setting.tooltip();
         }
-        String label = font.plainSubstrByWidth(setting.label().getString(), w - CONTROL_W - 8);
+        String label = Gfx.trim(font, setting.label().getString(), w - CONTROL_W - 8);
         g.text(font, label, x, y + 6, enabled ? Theme.TEXT : Theme.TEXT_FAINT);
 
         int right = x + w;
@@ -625,7 +645,7 @@ public class ControlPanelScreen extends Screen {
         float f = (float) r.fraction();
         float shown = animate("slider:" + r.id(), f);
         String value = r.format().apply(r.get().getAsInt());
-        g.text(font, value, x - 8 - font.width(value), y + 6, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT);
+        g.text(font, value, x - 8 - Gfx.width(font, value), y + 6, enabled ? Theme.TEXT_DIM : Theme.TEXT_FAINT);
 
         int trackY = y + 8;
         Theme.pill(g, x, trackY, SLIDER_W, 4, Theme.TRACK);
@@ -666,7 +686,7 @@ public class ControlPanelScreen extends Screen {
     }
 
     private Component keyLabel(@Nullable KeyMapping key, boolean withPrefix) {
-        Component name = key == null || key.isUnbound() ? Compat.translatable(T + "unbound") : key.getTranslatedKeyMessage();
+        Component name = key == null || key.isUnbound() ? Compat.translatable(T + "unbound") : Compat.keyName(key);
         return withPrefix ? Compat.translatable(T + "key_prefix", name) : name;
     }
 

@@ -10,6 +10,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+//? if <1.16
+/*import net.minecraft.world.level.dimension.DimensionType;*/
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 //? if >=26.2 {
@@ -62,7 +66,7 @@ public final class SmartTests {
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(20);
         // Where the tests stand: the flat world's floor, or the harness's sky arena on older versions. Flights end here.
-        start = context.computeOnClient(mc -> new double[]{mc.player.getX(), mc.player.getY(), mc.player.getZ()});
+        start = context.computeOnClient(mc -> new double[]{mc.player.position().x, mc.player.position().y, mc.player.position().z});
 
         testAutoAttack(context, server);
         testProtectsNamedMobs(context, server);
@@ -127,10 +131,10 @@ public final class SmartTests {
         toggleFreecam(context);
         context.waitTicks(2);
         double[] before = context.computeOnClient(mc -> offset(mc.player, mc.getCameraEntity()));
-        double startZ = context.computeOnClient(mc -> mc.player.getZ());
+        double startZ = context.computeOnClient(mc -> mc.player.position().z);
         context.waitTicks(60);
         double[] after = context.computeOnClient(mc -> offset(mc.player, mc.getCameraEntity()));
-        double flown = Math.abs(context.computeOnClient(mc -> mc.player.getZ()) - startZ);
+        double flown = Math.abs(context.computeOnClient(mc -> mc.player.position().z) - startZ);
         boolean stillFlying = context.computeOnClient(mc -> mc.player.isFallFlying());
         context.takeScreenshot("sac_freecam_elytra");
         check(stillFlying && flown > 20, "Should keep flying with Freecam on, but flew " + flown + " blocks");
@@ -144,7 +148,7 @@ public final class SmartTests {
     }
 
     private static double[] offset(Entity player, Entity camera) {
-        return new double[]{camera.getX() - player.getX(), camera.getZ() - player.getZ()};
+        return new double[]{camera.position().x - player.position().x, camera.position().z - player.position().z};
     }
 
     private static void toggleFreecam(TestClient context) {
@@ -171,13 +175,13 @@ public final class SmartTests {
         cfg.walkSprint = false;
         cfg.walkCrouch = true;
         context.waitTicks(10);
-        check(context.computeOnClient(mc -> mc.player.isCrouching()), "Auto Walk should crouch");
+        check(context.computeOnClient(mc -> crouching(mc.player)), "Auto Walk should crouch");
         check(!context.computeOnClient(mc -> mc.player.isSprinting()), "Crouching should end the sprint");
         context.takeScreenshot("sac_walk_crouch");
 
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.stop(false));
         context.waitTicks(5);
-        check(!context.computeOnClient(mc -> mc.player.isCrouching()), "Stopping Auto Walk should stand back up");
+        check(!context.computeOnClient(mc -> crouching(mc.player)), "Stopping Auto Walk should stand back up");
 
         context.runOnClient(mc -> setToggleCrouch(mc, true));
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.start(false));
@@ -185,12 +189,12 @@ public final class SmartTests {
         context.waitTicks(3);
         for (int i = 0; i < 10; i++) {
             context.waitTick();
-            steady &= context.computeOnClient(mc -> mc.options.keyShift.isDown());
+            steady &= context.computeOnClient(mc -> Compat.sneakKey(mc.options).isDown());
         }
         check(steady, "Auto Walk's crouch shouldn't flicker with Toggle Sneak on");
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.stop(false));
         context.waitTicks(5);
-        check(!context.computeOnClient(mc -> mc.options.keyShift.isDown()), "Stopping Auto Walk should release a toggled crouch");
+        check(!context.computeOnClient(mc -> Compat.sneakKey(mc.options).isDown()), "Stopping Auto Walk should release a toggled crouch");
 
         context.runOnClient(mc -> setToggleCrouch(mc, false));
         cfg.walkCrouch = false;
@@ -259,8 +263,8 @@ public final class SmartTests {
         context.waitTicks(10); // let the open animation finish
 
         double[] point = context.computeOnClient(mc -> {
-            int width = mc.getWindow().getGuiScaledWidth();
-            int height = mc.getWindow().getGuiScaledHeight();
+            int width = Compat.guiWidth(mc);
+            int height = Compat.guiHeight(mc);
             int w = Math.min(480, width - 20);
             int h = Math.min(280, height - 16);
             int x = (width - w) / 2;
@@ -268,7 +272,7 @@ public final class SmartTests {
             int contentW = w - 124 - 2 - 10 * 2 - 4;
             int switchX = x + 124 + 1 + 10 + 2 + contentW - 34 + 17;
             int switchY = y + 26 + 1 + 10 + 8 + 8;
-            double scale = mc.getWindow().getGuiScale();
+            double scale = Compat.guiScale(mc);
             return new double[]{switchX * scale, switchY * scale};
         });
         context.getInput().setCursorPos(point[0], point[1]);
@@ -455,7 +459,23 @@ public final class SmartTests {
         //? if >=26.2 {
         return server.overworld().getEntities(EntityTypes.HUSK, e -> e.isAlive()).size();
         //?} else
-        /*return server.overworld().getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+        /*return overworld(server).getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+    }
+
+    /** The overworld (MinecraftServer.overworld() exists from 1.16). */
+    public static ServerLevel overworld(MinecraftServer server) {
+        //? if >=1.16 {
+        return server.overworld();
+        //?} else
+        /*return server.getLevel(DimensionType.OVERWORLD);*/
+    }
+
+    /** Whether the player is crouching (isSneaking in 1.14). */
+    private static boolean crouching(Player player) {
+        //? if >=1.15 {
+        return player.isCrouching();
+        //?} else
+        /*return player.isSneaking();*/
     }
 
     /** Puts an item in a slot: /item replace from 1.17, /replaceitem before. */
@@ -477,8 +497,10 @@ public final class SmartTests {
     private static void setToggleCrouch(Minecraft mc, boolean toggle) {
         //? if >=1.19 {
         mc.options.toggleCrouch().set(toggle);
-        //?} else
-        /*mc.options.toggleCrouch = toggle;*/
+        //?} else if >=1.15 {
+        /*mc.options.toggleCrouch = toggle;
+        *///?}
+        // 1.14 has no Toggle Sneak: there the crouch is always held, which the same checks cover.
     }
 
     /** A CustomName value for /summon: a plain string from 1.20.3, a JSON text component in quotes before. */

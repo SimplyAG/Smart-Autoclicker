@@ -93,7 +93,7 @@ public class ElytraCruiseModule extends Module {
         if (!flying) {
             flying = true;
             start = player.position();
-            targetY = player.getY();
+            targetY = player.position().y;
         }
 
         Vec3 pos = player.position();
@@ -128,7 +128,7 @@ public class ElytraCruiseModule extends Module {
         Entity camera = mc.getCameraEntity();
         if (cfg.elytraCameraFollow && lastPos != null) {
             Vec3 moved = player.position().subtract(lastPos);
-            camera.setPos(camera.getX() + moved.x, camera.getY() + moved.y, camera.getZ() + moved.z);
+            camera.setPos(camera.position().x + moved.x, camera.position().y + moved.y, camera.position().z + moved.z);
         }
         if (cfg.elytraCameraSteer) {
             float yaw = Compat.yRot(player);
@@ -139,7 +139,7 @@ public class ElytraCruiseModule extends Module {
 
     /** Pitches gently up when below the takeoff height and down when above it. */
     private void holdAltitude(LocalPlayer player) {
-        double below = targetY - player.getY();
+        double below = targetY - player.position().y;
         float desired = (float) Mth.clamp(-4 - below * 1.5, -30, 15);
         float pitch = Compat.xRot(player);
         float next = pitch + Mth.clamp(desired - pitch, -MAX_PITCH_STEP, MAX_PITCH_STEP);

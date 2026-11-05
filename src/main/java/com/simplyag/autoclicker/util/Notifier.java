@@ -9,7 +9,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -58,10 +57,10 @@ public final class Notifier {
 
     /** "Auto Attack, Hold Left Click". */
     public static Component names(List<Module> modules) {
-        MutableComponent names = Compat.empty();
+        Component names = Compat.empty();
         for (int i = 0; i < modules.size(); i++) {
-            if (i > 0) names.append(", ");
-            names.append(modules.get(i).name());
+            if (i > 0) names = Compat.append(names, Compat.literal(", "));
+            names = Compat.append(names, modules.get(i).name());
         }
         return names;
     }
@@ -70,7 +69,7 @@ public final class Notifier {
     public static @Nullable Component stopHint() {
         KeyMapping stop = AutoClickerClient.stopAllKey();
         if (stop == null || stop.isUnbound()) return null;
-        return Compat.translatable("smart-autoclicker.toast.stop_hint", stop.getTranslatedKeyMessage());
+        return Compat.translatable("smart-autoclicker.toast.stop_hint", Compat.keyName(stop));
     }
 
     public static void info(ItemStack icon, Component title, @Nullable Component message) {

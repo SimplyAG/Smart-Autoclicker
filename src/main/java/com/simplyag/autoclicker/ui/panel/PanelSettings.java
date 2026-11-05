@@ -1,11 +1,11 @@
 package com.simplyag.autoclicker.ui.panel;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.google.common.collect.ImmutableList;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.module.Module;
 import com.simplyag.autoclicker.module.ModuleManager;
-import net.minecraft.network.chat.CommonComponents;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public final class PanelSettings {
     }
 
     private static String off() {
-        return CommonComponents.OPTION_OFF.getString();
+        return Compat.translatable("options.off").getString();
     }
 
     private static String hearts(int health) {

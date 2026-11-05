@@ -204,7 +204,10 @@ public final class ModuleManager {
 
     public static final List<Preset> PRESETS = ImmutableList.of(
             new Preset("mob_grinder", Items.DIAMOND_SWORD),
+            //? if >=1.16 {
             new Preset("sweep_grinder", Items.NETHERITE_SWORD),
+            //?} else
+            /*new Preset("sweep_grinder", Items.GOLDEN_SWORD),*/
             new Preset("afk_miner", Items.DIAMOND_PICKAXE),
             new Preset("elytra_trip", Items.ELYTRA));
 

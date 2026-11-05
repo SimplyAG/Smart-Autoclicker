@@ -3,12 +3,15 @@ package com.simplyag.autoclicker.util;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.ui.Gfx;
+//? if <1.15
+/*import com.simplyag.autoclicker.mixin.LegacyKeyMappingAccessor;*/
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+//? if >=1.16
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -54,8 +57,12 @@ import net.minecraft.world.inventory.ClickType;
 *///?}
 //? if >=1.21.6 {
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-//?} else
-/*import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;*/
+//?} else if >=1.15 {
+/*import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+*///?} else {
+/*import java.util.ArrayList;
+import java.util.List;
+*///?}
 
 /**
  * Every Minecraft API that differs between the supported versions, in one place. The rest of the mod calls these
@@ -176,25 +183,67 @@ public final class Compat {
     }
 
     /** Translated text. Component.translatable/literal/empty exist from 1.19; before it they were classes. */
+    // Before 1.16 there is no MutableComponent: Component itself is mutable, so the same helpers return Component.
+    //? if >=1.16 {
     public static MutableComponent translatable(String key, Object... args) {
+    //?} else
+    /*public static Component translatable(String key, Object... args) {*/
         //? if >=1.19 {
         return Component.translatable(key, args);
         //?} else
         /*return new TranslatableComponent(key, args);*/
     }
 
+    //? if >=1.16 {
     public static MutableComponent literal(String text) {
+    //?} else
+    /*public static Component literal(String text) {*/
         //? if >=1.19 {
         return Component.literal(text);
         //?} else
         /*return new TextComponent(text);*/
     }
 
+    //? if >=1.16 {
     public static MutableComponent empty() {
+    //?} else
+    /*public static Component empty() {*/
         //? if >=1.19 {
         return Component.empty();
         //?} else
         /*return new TextComponent("");*/
+    }
+
+    /** Text followed by more text, as a new component (the original isn't changed from 1.16 on). */
+    public static Component append(Component text, Component more) {
+        //? if >=1.16 {
+        return text.copy().append(more);
+        //?} else
+        /*return text.append(more);*/
+    }
+
+    /** Presses or releases a key mapping (KeyMapping.setDown exists from 1.15; before, through an accessor). */
+    public static void setDown(KeyMapping key, boolean down) {
+        //? if >=1.15 {
+        key.setDown(down);
+        //?} else
+        /*((LegacyKeyMappingAccessor) key).smart$setIsDown(down);*/
+    }
+
+    /** The Sneak key (keyShift from 1.15, keySneak before). */
+    public static KeyMapping sneakKey(Options options) {
+        //? if >=1.15 {
+        return options.keyShift;
+        //?} else
+        /*return options.keySneak;*/
+    }
+
+    /** The name of the key a mapping is bound to, e.g. "Z". */
+    public static Component keyName(KeyMapping key) {
+        //? if >=1.16 {
+        return key.getTranslatedKeyMessage();
+        //?} else
+        /*return literal(key.getTranslatedKeyMessage());*/
     }
 
     /** Uses the item in a hand, as a right click does. */
@@ -209,8 +258,10 @@ public final class Compat {
     public static boolean toggleCrouch(Options options) {
         //? if >=1.19 {
         return options.toggleCrouch().get();
-        //?} else
-        /*return options.toggleCrouch;*/
+        //?} else if >=1.15 {
+        /*return options.toggleCrouch;
+        *///?} else
+        /*return false; // Toggle Sneak arrived in 1.15*/
     }
 
     /** The low and high note-block sounds the alerts use. */
@@ -238,7 +289,10 @@ public final class Compat {
     }
 
     /** Colours a text component with an ARGB/RGB colour. */
+    //? if >=1.16 {
     public static MutableComponent withColor(MutableComponent text, int color) {
+    //?} else
+    /*public static Component withColor(Component text, int color) {*/
         //? if >=1.20.3 {
         return text.withColor(color);
         //?} else if >=1.17 {
@@ -320,12 +374,27 @@ public final class Compat {
         /*return KeyBindingHelper.getBoundKeyOf(key);*/
     }
 
+    //? if <1.15 {
+    /*private static final List<Consumer<Gfx>> HUDS = new ArrayList<>();
+
+    /^* Draws the registered HUD elements; called by GuiMixin after the vanilla HUD (1.14 only). ^/
+    public static void drawHuds() {
+        for (Consumer<Gfx> hud : HUDS) hud.accept(new Gfx());
+    }
+
+    *///?}
     /** Draws something on the HUD every frame, above the vanilla HUD. */
     public static void registerHud(String name, Consumer<Gfx> draw) {
         //? if >=1.21.6 {
         HudElementRegistry.addLast(AutoClickerClient.id(name), (graphics, deltaTracker) -> draw.accept(new Gfx(graphics)));
-        //?} else
-        /*HudRenderCallback.EVENT.register((graphics, tickDelta) -> draw.accept(new Gfx(graphics)));*/
+        //?} else if >=1.16 {
+        /*HudRenderCallback.EVENT.register((graphics, tickDelta) -> draw.accept(new Gfx(graphics)));
+        *///?} else if >=1.15 {
+        /*HudRenderCallback.EVENT.register(tickDelta -> draw.accept(new Gfx()));
+        *///?} else {
+        /*// Fabric API has no HUD callback for 1.14: GuiMixin draws these after the vanilla HUD.
+        HUDS.add(draw);
+        *///?}
     }
 
     /** Whether the game window has focus (the player isn't tabbed out). */
@@ -340,7 +409,7 @@ public final class Compat {
         //?} else if >=1.21.9 {
         /*return InputConstants.isKeyDown(mc.getWindow(), key);
         *///?} else
-        /*return InputConstants.isKeyDown(mc.getWindow().getWindow(), key);*/
+        /*return InputConstants.isKeyDown(windowHandle(mc), key);*/
     }
 
     /** Swaps an inventory slot with a hotbar slot, as pressing a number key over it in the inventory does. */
@@ -386,10 +455,42 @@ public final class Compat {
         /*GLFW.glfwIconifyWindow(windowHandle(mc));*/
     }
 
-    private static long windowHandle(Minecraft mc) {
+    // The game window's size and scale (Minecraft.window is a field before 1.15).
+    public static int guiWidth(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScaledWidth();
+        //?} else
+        /*return mc.window.getGuiScaledWidth();*/
+    }
+
+    public static int guiHeight(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScaledHeight();
+        //?} else
+        /*return mc.window.getGuiScaledHeight();*/
+    }
+
+    public static double guiScale(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScale();
+        //?} else
+        /*return mc.window.getGuiScale();*/
+    }
+
+    /** The window size in pixels: width and height. */
+    public static int[] windowSize(Minecraft mc) {
+        //? if >=1.15 {
+        return new int[]{mc.getWindow().getWidth(), mc.getWindow().getHeight()};
+        //?} else
+        /*return new int[]{mc.window.getWidth(), mc.window.getHeight()};*/
+    }
+
+    public static long windowHandle(Minecraft mc) {
         //? if >=1.21.9 {
         return mc.getWindow().handle();
-        //?} else
-        /*return mc.getWindow().getWindow();*/
+        //?} else if >=1.15 {
+        /*return mc.getWindow().getWindow();
+        *///?} else
+        /*return mc.window.getWindow();*/
     }
 }

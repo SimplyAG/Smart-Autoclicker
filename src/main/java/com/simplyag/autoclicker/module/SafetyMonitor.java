@@ -46,7 +46,7 @@ public final class SafetyMonitor {
             return;
         }
 
-        if (player.isDeadOrDying()) {
+        if (player.getHealth() <= 0) {
             ModuleManager.stopAll(Compat.translatable("smart-autoclicker.toast.died"));
             return;
         }

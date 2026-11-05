@@ -16,24 +16,26 @@ public final class Input {
 
     /** Press a key mapping for this tick. Call every tick to keep it held. */
     public static void hold(KeyMapping key) {
-        key.setDown(true);
+        Compat.setDown(key, true);
     }
 
     /** Let go of a key mapping, unless the player is physically holding that key themselves. */
     public static void release(KeyMapping key) {
-        key.setDown(isPhysicallyDown(key));
+        Compat.setDown(key, isPhysicallyDown(key));
     }
 
     /** Keeps crouching. With Toggle Sneak on, every press flips the key, so only press it when it's up. */
     public static void holdCrouch(Options options) {
-        if (!options.keyShift.isDown()) hold(options.keyShift);
+        KeyMapping sneak = Compat.sneakKey(options);
+        if (!sneak.isDown()) hold(sneak);
     }
 
     public static void releaseCrouch(Options options) {
+        KeyMapping sneak = Compat.sneakKey(options);
         if (!Compat.toggleCrouch(options)) {
-            release(options.keyShift);
-        } else if (options.keyShift.isDown()) {
-            options.keyShift.setDown(true); // Toggle Sneak ignores a release; another press turns it off
+            release(sneak);
+        } else if (sneak.isDown()) {
+            Compat.setDown(sneak, true); // Toggle Sneak ignores a release; another press turns it off
         }
     }
 

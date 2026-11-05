@@ -40,8 +40,8 @@ public final class StatusHud {
                     : Compat.empty().append(module.name()).append(Compat.withColor(Compat.literal("  ").append(status), Theme.TEXT_DIM))));
         }
 
-        int width = 8 + font.width(header);
-        for (Line line : lines) width = Math.max(width, 10 + font.width(line.text));
+        int width = 8 + Gfx.width(font, header);
+        for (Line line : lines) width = Math.max(width, 10 + Gfx.width(font, line.text));
         int panelW = width + PADDING * 2;
         int panelH = PADDING * 2 + LINE_HEIGHT * (lines.size() + 1);
 

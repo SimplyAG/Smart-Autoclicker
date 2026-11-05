@@ -37,7 +37,10 @@ dependencies {
 	// modmenu_version=NONE: no Mod Menu build for that Minecraft version (the integration is left out there).
 	if (project.modmenu_version != "NONE") {
 		modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
-		modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+		// modmenu_runtime=false: compile against it, but leave it out of the test game (its Fabric API needs differ).
+		if (project.findProperty("modmenu_runtime") != "false") {
+			modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+		}
 	} else {
 		sourceSets.main.java.exclude "**/integration/ModMenuIntegration.java"
 	}

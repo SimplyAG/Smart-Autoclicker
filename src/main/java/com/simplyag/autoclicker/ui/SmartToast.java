@@ -5,7 +5,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.network.chat.Component;
+//? if >=1.16.2 {
 import net.minecraft.util.FormattedCharSequence;
+//?} else
+/*import com.simplyag.autoclicker.ui.legacy.FormattedCharSequence;*/
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
@@ -14,7 +17,7 @@ import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?} else if >=1.20 {
 /*import net.minecraft.client.gui.GuiGraphics;
-*///?} else {
+*///?} else if >=1.16 {
 /*import com.mojang.blaze3d.vertex.PoseStack;
 *///?}
 //? if >=1.21.2 {
@@ -30,8 +33,15 @@ public class SmartToast implements Toast {
     private static final int PANEL = 0xF0141820;
     private static final int BORDER = 0xFF2E3648;
     private static final int TEXT_X = 32;
-    private static final int MAX_TEXT_WIDTH = 200;
     private static final int MIN_WIDTH = 160;
+    // Before 1.16 every toast gets a fixed 160 x 32 slot: one line of message, as wide as fits.
+    //? if >=1.16 {
+    private static final int MAX_TEXT_WIDTH = 200;
+    private static final int MAX_LINES = 2;
+    //?} else {
+    /*private static final int MAX_TEXT_WIDTH = MIN_WIDTH - TEXT_X - 6;
+    private static final int MAX_LINES = 1;
+    *///?}
     private static final long DISPLAY_MS = 4500;
 
     private final Object token;
@@ -75,13 +85,23 @@ public class SmartToast implements Toast {
     }
 
     private void layout(Font font) {
-        lines = message == null ? ImmutableList.of() : font.split(message, MAX_TEXT_WIDTH);
-        if (lines.size() > 2) lines = lines.subList(0, 2);
-        int textWidth = font.width(title);
-        for (FormattedCharSequence line : lines) {
-            textWidth = Math.max(textWidth, font.width(line));
+        lines = message == null ? ImmutableList.of() : Gfx.split(font, message, MAX_TEXT_WIDTH);
+        //? if <1.16 {
+        /*if (lines.size() > MAX_LINES) {
+            // One line only: show that more was cut off.
+            String first = Gfx.trim(font, lines.get(0).text, MAX_TEXT_WIDTH - Gfx.width(font, "..."));
+            lines = ImmutableList.of(new FormattedCharSequence(first + "..."));
         }
+        *///?}
+        if (lines.size() > MAX_LINES) lines = lines.subList(0, MAX_LINES);
+        int textWidth = Gfx.width(font, title);
+        for (FormattedCharSequence line : lines) {
+            textWidth = Math.max(textWidth, Gfx.width(font, line));
+        }
+        //? if >=1.16 {
         width = Math.max(MIN_WIDTH, TEXT_X + textWidth + 10);
+        //?} else
+        /*width = MIN_WIDTH;*/
     }
 
     /** Lays out new text and decides whether the toast is still wanted on screen. */
@@ -100,12 +120,11 @@ public class SmartToast implements Toast {
         return token;
     }
 
-    @Override
+    // Toast.width()/height() exist from 1.16; before, the slot is always 160 x 32 (no @Override, so it compiles on both).
     public int width() {
         return width;
     }
 
-    @Override
     public int height() {
         return lines.size() <= 1 ? 32 : 42;
     }
@@ -140,7 +159,7 @@ public class SmartToast implements Toast {
         draw(new Gfx(graphics), font);
         return visibility;
     }
-    *///?} else {
+    *///?} else if >=1.16 {
     /*@Override
     public Toast.Visibility render(PoseStack pose, ToastComponent manager, long fullyVisibleForMs) {
         Font font = manager.getMinecraft().font;
@@ -151,6 +170,14 @@ public class SmartToast implements Toast {
         /^double multiplier = 1.0;^/
         tick(font, multiplier, fullyVisibleForMs);
         draw(new Gfx(pose), font);
+        return visibility;
+    }
+    *///?} else {
+    /*@Override
+    public Toast.Visibility render(ToastComponent manager, long fullyVisibleForMs) {
+        Font font = manager.getMinecraft().font;
+        tick(font, 1.0, fullyVisibleForMs);
+        draw(new Gfx(), font);
         return visibility;
     }
     *///?}

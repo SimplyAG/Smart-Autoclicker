@@ -122,8 +122,10 @@ public class TestHarness implements Runnable, TestClient {
             CreateWorldScreen.openFresh(mc, mc.screen);
             //?} else if >=1.18.2 {
             /*mc.setScreen(CreateWorldScreen.createFresh(mc.screen));
+            *///?} else if >=1.16.2 {
+            /*mc.setScreen(CreateWorldScreen.create(mc.screen));
             *///?} else
-            /*mc.setScreen(CreateWorldScreen.create(mc.screen));*/
+            /*mc.setScreen(new CreateWorldScreen(mc.screen));*/
             if (!(mc.screen instanceof CreateWorldScreen)) throw new AssertionError("Create World screen didn't open");
             CreateWorldScreen screen = (CreateWorldScreen) mc.screen;
             //? if >=1.19.4 {
@@ -172,8 +174,10 @@ public class TestHarness implements Runnable, TestClient {
         server.runCommand("tp @p 0.5 " + (ARENA_Y + 1) + " 0.5 0 0");
         //? if >=1.20 {
         waitFor(mc -> mc.player.onGround(), 20 * 30);
-        //?} else
-        /*waitFor(mc -> mc.player.isOnGround(), 20 * 30);*/
+        //?} else if >=1.16 {
+        /*waitFor(mc -> mc.player.isOnGround(), 20 * 30);
+        *///?} else
+        /*waitFor(mc -> mc.player.onGround, 20 * 30);*/
         waitTicks(20);
     }
 
@@ -181,7 +185,7 @@ public class TestHarness implements Runnable, TestClient {
         return server.computeOnServer(s -> {
             for (int x : new int[]{-r, r}) {
                 for (int z : new int[]{-r, r}) {
-                    if (s.overworld().getBlockState(new BlockPos(x, ARENA_Y, z)).getBlock() != Blocks.SMOOTH_STONE) return false;
+                    if (SmartTests.overworld(s).getBlockState(new BlockPos(x, ARENA_Y, z)).getBlock() != Blocks.SMOOTH_STONE) return false;
                 }
             }
             return true;
@@ -201,7 +205,10 @@ public class TestHarness implements Runnable, TestClient {
     private static Button findButton(ContainerEventHandler parent, String translationKey) {
         Component label = Compat.translatable(translationKey);
         for (GuiEventListener child : parent.children()) {
+            //? if >=1.16 {
             if (child instanceof Button && ((Button) child).getMessage().getString().equals(label.getString())) return (Button) child;
+            //?} else
+            /*if (child instanceof Button && ((Button) child).getMessage().equals(label.getString())) return (Button) child;*/
             if (child instanceof ContainerEventHandler) {
                 Button found = findButton((ContainerEventHandler) child, translationKey);
                 if (found != null) return found;
@@ -287,8 +294,8 @@ public class TestHarness implements Runnable, TestClient {
         runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", mc.getMainRenderTarget(),
                 message -> LOGGER.info("Screenshot {}: {}", name, message.getString())));
         //?} else {
-        /*runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", mc.getWindow().getWidth(),
-                mc.getWindow().getHeight(), mc.getMainRenderTarget(),
+        /*runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", Compat.windowSize(mc)[0],
+                Compat.windowSize(mc)[1], mc.getMainRenderTarget(),
                 message -> LOGGER.info("Screenshot {}: {}", name, message.getString())));
         *///?}
     }
@@ -298,18 +305,18 @@ public class TestHarness implements Runnable, TestClient {
         return new Input() {
             @Override
             public void holdKey(Function<Options, KeyMapping> key) {
-                runOnClient(mc -> key.apply(mc.options).setDown(true));
+                runOnClient(mc -> Compat.setDown(key.apply(mc.options), true));
             }
 
             @Override
             public void releaseKey(Function<Options, KeyMapping> key) {
-                runOnClient(mc -> key.apply(mc.options).setDown(false));
+                runOnClient(mc -> Compat.setDown(key.apply(mc.options), false));
             }
 
             @Override
             public void pressKey(int key) {
                 runOnClient(mc -> {
-                    long window = mc.getWindow().getWindow();
+                    long window = Compat.windowHandle(mc);
                     mc.keyboardHandler.keyPress(window, key, 0, GLFW.GLFW_PRESS, 0);
                     mc.keyboardHandler.keyPress(window, key, 0, GLFW.GLFW_RELEASE, 0);
                 });
@@ -326,7 +333,7 @@ public class TestHarness implements Runnable, TestClient {
             public void pressMouse(int button) {
                 runOnClient(mc -> {
                     if (mc.screen == null) throw new AssertionError("pressMouse needs an open screen in the harness");
-                    double scale = mc.getWindow().getGuiScale();
+                    double scale = Compat.guiScale(mc);
                     mc.screen.mouseClicked(cursorX / scale, cursorY / scale, button);
                     mc.screen.mouseReleased(cursorX / scale, cursorY / scale, button);
                 });
