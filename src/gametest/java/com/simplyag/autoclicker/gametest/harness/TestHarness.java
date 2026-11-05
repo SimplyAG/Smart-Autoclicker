@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.gametest.harness;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.gametest.SmartTests;
 import com.simplyag.autoclicker.gametest.TestClient;
@@ -13,14 +14,16 @@ import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+//? if >=1.19.4 {
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
+//?}
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,12 +108,23 @@ public class TestHarness implements Runnable, TestClient {
         Runtime.getRuntime().halt(1);
     }
 
-    /** A flat, peaceful-weather, no-daylight-cycle world, like Fabric's test world builder makes. */
+    /**
+     * A flat, peaceful-weather, no-daylight-cycle world, like Fabric's test world builder makes. Before 1.19.4 the
+     * Create World screen has no API for the world type, so those versions make a normal world and build a flat stone
+     * arena high above the terrain instead (see {@link #buildArena}).
+     */
     private void createWorld() {
         runOnClient(mc -> {
             deleteSaves(mc.gameDirectory.toPath().resolve("saves"));
+            //? if >=1.19 {
             CreateWorldScreen.openFresh(mc, mc.screen);
-            if (!(mc.screen instanceof CreateWorldScreen screen)) throw new AssertionError("Create World screen didn't open");
+            //?} else if >=1.18.2 {
+            /*mc.setScreen(CreateWorldScreen.createFresh(mc.screen));
+            *///?} else
+            /*mc.setScreen(CreateWorldScreen.create(mc.screen));*/
+            if (!(mc.screen instanceof CreateWorldScreen)) throw new AssertionError("Create World screen didn't open");
+            CreateWorldScreen screen = (CreateWorldScreen) mc.screen;
+            //? if >=1.19.4 {
             WorldCreationUiState state = screen.getUiState();
             Holder<WorldPreset> flat = state.getSettings().worldgenLoadContext().lookupOrThrow(Registries.WORLD_PRESET)
                     .getOrThrow(WorldPresets.FLAT);
@@ -120,11 +134,41 @@ public class TestHarness implements Runnable, TestClient {
             state.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, null);
             state.getGameRules().getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
             state.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
+            //?}
             Button create = findButton(screen, "selectWorld.create");
             if (create == null) throw new AssertionError("No Create World button");
             create.onPress();
         });
         waitFor(mc -> mc.level != null && mc.player != null && mc.screen == null, 20 * 120);
+        waitTicks(20);
+        //? if <1.19.4
+        /*buildArena(new HarnessServer(computeOnClient(Minecraft::getSingleplayerServer)));*/
+    }
+
+    /** Arena floor height: above the terrain of every version, below the old 256 build limit with room to fly. */
+    private static final int ARENA_Y = 150;
+    /** Half the arena's width; 181 x 181 blocks is just under /fill's 32768-block limit. */
+    private static final int ARENA_RADIUS = 90;
+
+    /** A flat stone floor in the sky, no mobs, no weather, fixed noon: the tests' flat world on older versions. */
+    private void buildArena(HarnessServer server) {
+        server.runCommand("gamerule doMobSpawning false");
+        server.runCommand("gamerule doWeatherCycle false");
+        server.runCommand("gamerule doDaylightCycle false");
+        server.runCommand("weather clear");
+        int r = ARENA_RADIUS;
+        // /fill only works on loaded chunks: keep the whole arena loaded, then give the chunks time to load.
+        server.runCommand("forceload add " + -r + " " + -r + " " + r + " " + r);
+        server.runCommand("tp @p 0.5 " + (ARENA_Y + 1) + " 0.5 0 0");
+        waitFor(mc -> mc.player.getY() > ARENA_Y, 20 * 30);
+        waitTicks(100);
+        server.runCommand("fill " + -r + " " + ARENA_Y + " " + -r + " " + r + " " + ARENA_Y + " " + r + " minecraft:smooth_stone");
+        server.runCommand("kill @e[type=!player]");
+        server.runCommand("tp @p 0.5 " + (ARENA_Y + 1) + " 0.5 0 0");
+        //? if >=1.20 {
+        waitFor(mc -> mc.player.onGround(), 20 * 30);
+        //?} else
+        /*waitFor(mc -> mc.player.isOnGround(), 20 * 30);*/
         waitTicks(20);
     }
 
@@ -139,7 +183,7 @@ public class TestHarness implements Runnable, TestClient {
     }
 
     private static Button findButton(ContainerEventHandler parent, String translationKey) {
-        Component label = Component.translatable(translationKey);
+        Component label = Compat.translatable(translationKey);
         for (GuiEventListener child : parent.children()) {
             if (child instanceof Button button && button.getMessage().equals(label)) return button;
             if (child instanceof ContainerEventHandler container) {
@@ -223,8 +267,14 @@ public class TestHarness implements Runnable, TestClient {
     public void takeScreenshot(String name) {
         // Let a frame render first, as Fabric's API does.
         waitTick();
+        //? if >=1.17.1 {
         runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", mc.getMainRenderTarget(),
                 message -> LOGGER.info("Screenshot {}: {}", name, message.getString())));
+        //?} else {
+        /*runOnClient(mc -> Screenshot.grab(mc.gameDirectory, name + ".png", mc.getWindow().getWidth(),
+                mc.getWindow().getHeight(), mc.getMainRenderTarget(),
+                message -> LOGGER.info("Screenshot {}: {}", name, message.getString())));
+        *///?}
     }
 
     @Override
@@ -272,7 +322,10 @@ public class TestHarness implements Runnable, TestClient {
     private record HarnessServer(MinecraftServer server) implements TestClient.Server {
         @Override
         public void runCommand(String command) {
+            //? if >=1.19 {
             runOnServer(s -> s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), command));
+            //?} else
+            /*runOnServer(s -> s.getCommands().performCommand(s.createCommandSourceStack(), command));*/
         }
 
         @Override

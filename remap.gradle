@@ -34,8 +34,13 @@ dependencies {
 	// Optional: Mod Menu adds a config button. Not required at runtime.
 	// Not transitive: some Mod Menu releases list a dependency (Placeholder API) that isn't on any public maven, and
 	// Mod Menu bundles what it needs to run.
-	modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
-	modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+	// modmenu_version=NONE: no Mod Menu build for that Minecraft version (the integration is left out there).
+	if (project.modmenu_version != "NONE") {
+		modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+		modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+	} else {
+		sourceSets.main.java.exclude "**/integration/ModMenuIntegration.java"
+	}
 
 	// 26.x ships JSpecify with the game; older Minecraft doesn't, and the mod's @Nullable annotations need it to
 	// compile. Annotations only: nothing from it is needed at runtime.

@@ -3,7 +3,7 @@ package com.simplyag.autoclicker.gametest;
 import net.fabricmc.api.ClientModInitializer;
 
 /**
- * Starts the mod's own test harness (src/harness) on Minecraft versions without Fabric's client game-test API, when the
+ * Starts the mod's own test harness (gametest/harness) on Minecraft versions without Fabric's client game-test API, when the
  * game runs with -Dsmart-autoclicker.harness=true. Does nothing otherwise, so the test mod is the same on every version.
  */
 public class HarnessEntrypoint implements ClientModInitializer {

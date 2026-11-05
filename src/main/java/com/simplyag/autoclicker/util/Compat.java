@@ -5,11 +5,19 @@ import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.ui.Gfx;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 //? if >=1.20.5
 import net.minecraft.core.component.DataComponents;
+//? if <1.19 {
+/*import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+*///?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.OwnableEntity;
@@ -81,6 +89,52 @@ public final class Compat {
         return entity.getOwnerReference() != null;
         //?} else
         /*return entity.getOwnerUUID() != null;*/
+    }
+
+    /** Translated text. Component.translatable/literal/empty exist from 1.19; before it they were classes. */
+    public static MutableComponent translatable(String key, Object... args) {
+        //? if >=1.19 {
+        return Component.translatable(key, args);
+        //?} else
+        /*return new TranslatableComponent(key, args);*/
+    }
+
+    public static MutableComponent literal(String text) {
+        //? if >=1.19 {
+        return Component.literal(text);
+        //?} else
+        /*return new TextComponent(text);*/
+    }
+
+    public static MutableComponent empty() {
+        //? if >=1.19 {
+        return Component.empty();
+        //?} else
+        /*return new TextComponent("");*/
+    }
+
+    /** Uses the item in a hand, as a right click does. */
+    public static void useItem(Minecraft mc, LocalPlayer player, InteractionHand hand) {
+        //? if >=1.19 {
+        mc.gameMode.useItem(player, hand);
+        //?} else
+        /*mc.gameMode.useItem(player, mc.level, hand);*/
+    }
+
+    /** Whether the player set Sneak to toggle instead of hold. */
+    public static boolean toggleCrouch(Options options) {
+        //? if >=1.19 {
+        return options.toggleCrouch().get();
+        //?} else
+        /*return options.toggleCrouch;*/
+    }
+
+    /** The low and high note-block sounds the alerts use. */
+    public static SoundEvent alertSound(boolean bad) {
+        //? if >=1.19.3 {
+        return bad ? SoundEvents.NOTE_BLOCK_BASS.value() : SoundEvents.NOTE_BLOCK_CHIME.value();
+        //?} else
+        /*return bad ? SoundEvents.NOTE_BLOCK_BASS : SoundEvents.NOTE_BLOCK_CHIME;*/
     }
 
     /** How far away the player can hit an entity. */
@@ -183,7 +237,7 @@ public final class Compat {
         //? if >=1.21.6 {
         HudElementRegistry.addLast(AutoClickerClient.id(name), (graphics, deltaTracker) -> draw.accept(new Gfx(graphics)));
         //?} else
-        /*HudRenderCallback.EVENT.register((graphics, deltaTracker) -> draw.accept(new Gfx(graphics)));*/
+        /*HudRenderCallback.EVENT.register((graphics, tickDelta) -> draw.accept(new Gfx(graphics)));*/
     }
 
     /** Whether the game window has focus (the player isn't tabbed out). */

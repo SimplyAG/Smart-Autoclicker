@@ -54,6 +54,6 @@ public class MobSweepModule extends Module {
 
     @Override
     public @Nullable Component status() {
-        return Component.translatable("smart-autoclicker.status.sweep", SmartConfig.get().sweepWidthDeg);
+        return Compat.translatable("smart-autoclicker.status.sweep", SmartConfig.get().sweepWidthDeg);
     }
 }

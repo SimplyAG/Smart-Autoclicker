@@ -31,8 +31,11 @@ import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 //? if >=26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-//?} else {
+//?} else if >=1.20 {
 /*import net.minecraft.client.gui.GuiGraphics;
+*///?} else {
+/*import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
 *///?}
 //? if >=1.21.9 {
 import net.minecraft.client.input.KeyEvent;
@@ -61,7 +64,7 @@ public class ControlPanelScreen extends Screen {
         Component name() {
             return switch (kind) {
                 case MODULE -> module.name();
-                default -> Component.translatable(T + kind.name().toLowerCase());
+                default -> Compat.translatable(T + kind.name().toLowerCase());
             };
         }
 
@@ -109,7 +112,7 @@ public class ControlPanelScreen extends Screen {
     private int sidebarX0, sidebarY0, sidebarX1, sidebarY1;
 
     public ControlPanelScreen(@Nullable Screen parent) {
-        super(Component.translatable("smart-autoclicker.screen.title"));
+        super(Compat.translatable("smart-autoclicker.screen.title"));
         this.parent = parent;
         pages.add(new Page(Kind.PRESETS, null));
         for (Module module : ModuleManager.ALL) pages.add(new Page(Kind.MODULE, module));
@@ -141,7 +144,7 @@ public class ControlPanelScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         drawPanel(new Gfx(graphics), mouseX, mouseY);
     }
-    //?} else {
+    //?} else if >=1.20 {
     /*@Override
     //? if >=1.20.2 {
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float a) {
@@ -173,6 +176,22 @@ public class ControlPanelScreen extends Screen {
         ^///?} else if <1.21.6
         /^renderBackground(graphics, mouseX, mouseY, a);^/
         drawPanel(new Gfx(graphics), mouseX, mouseY);
+    }
+    *///?} else {
+    /*// Before 1.20 screens draw with a PoseStack and paint their own background.
+    @Override
+    public void renderBackground(PoseStack pose) {
+        if (minecraft.level == null) {
+            super.renderBackground(pose);
+            return;
+        }
+        GuiComponent.fill(pose, 0, 0, width, height, 0x80000000);
+    }
+
+    @Override
+    public void render(PoseStack pose, int mouseX, int mouseY, float a) {
+        renderBackground(pose);
+        drawPanel(new Gfx(pose), mouseX, mouseY);
     }
     *///?}
 
@@ -214,7 +233,7 @@ public class ControlPanelScreen extends Screen {
         int right = x + w - 6;
         long running = ModuleManager.ALL.stream().filter(Module::isRunning).count();
         if (running > 0) {
-            Component label = Component.translatable(T + "stop_all");
+            Component label = Compat.translatable(T + "stop_all");
             int bw = font.width(label) + 16;
             int bx = right - bw;
             boolean hover = inside(mx, my, bx, y + 5, bw, 16);
@@ -224,13 +243,13 @@ public class ControlPanelScreen extends Screen {
             right = bx - 8;
 
             Session session = ModuleManager.session();
-            Component summary = Component.translatable(T + "running", running,
+            Component summary = Compat.translatable(T + "running", running,
                     session == null ? "0s" : Session.formatDuration(session.elapsedMillis()));
             int sw = font.width(summary);
             Theme.pill(g, right - sw - 8, y + 11, 4, 4, Theme.GOOD);
             g.text(font, summary, right - sw, y + 9, Theme.GOOD);
         } else {
-            Component idle = Component.translatable(T + "idle");
+            Component idle = Compat.translatable(T + "idle");
             g.text(font, idle, right - font.width(idle), y + 9, Theme.TEXT_FAINT);
         }
     }
@@ -259,7 +278,7 @@ public class ControlPanelScreen extends Screen {
     }
 
     private int sectionLabel(Gfx g, String key, int x, int y) {
-        g.text(font, Component.translatable(T + "section." + key), x + 10, y + 7, Theme.TEXT_FAINT);
+        g.text(font, Compat.translatable(T + "section." + key), x + 10, y + 7, Theme.TEXT_FAINT);
         return y + 19;
     }
 
@@ -346,13 +365,13 @@ public class ControlPanelScreen extends Screen {
         if (module.isRunning()) {
             Theme.pill(g, x + 40, statusY + 2, 4, 4, Theme.GOOD);
             Component status = module.status();
-            Component text = status == null ? Component.translatable(T + "running_short")
-                    : Component.translatable(T + "running_short").append(Component.literal(" · ")).append(status);
+            Component text = status == null ? Compat.translatable(T + "running_short")
+                    : Compat.translatable(T + "running_short").append(Compat.literal(" · ")).append(status);
             g.text(font, text, x + 48, statusY, Theme.GOOD);
         } else if (!inWorld) {
-            g.text(font, Component.translatable(T + "join_world"), x + 40, statusY, Theme.WARN);
+            g.text(font, Compat.translatable(T + "join_world"), x + 40, statusY, Theme.WARN);
         } else {
-            g.text(font, Component.translatable(T + "stopped"), x + 40, statusY, Theme.TEXT_FAINT);
+            g.text(font, Compat.translatable(T + "stopped"), x + 40, statusY, Theme.TEXT_FAINT);
         }
 
         drawSwitch(g, "module:" + module.id(), x + w - 34, y + 8, 34, 16, module.isRunning(), inWorld, module.color(),
@@ -382,9 +401,9 @@ public class ControlPanelScreen extends Screen {
     private int drawCompatibility(Gfx g, Module module, int x, int y, int w) {
         List<Component> lines = new ArrayList<>();
         Module required = ModuleManager.requirementOf(module);
-        if (required != null) lines.add(Component.translatable(T + "requires", required.name()));
+        if (required != null) lines.add(Compat.translatable(T + "requires", required.name()));
         List<Module> conflicts = ModuleManager.conflictsOf(module);
-        if (!conflicts.isEmpty()) lines.add(Component.translatable(T + "conflicts", Notifier.names(conflicts)));
+        if (!conflicts.isEmpty()) lines.add(Compat.translatable(T + "conflicts", Notifier.names(conflicts)));
         for (Component line : lines) {
             for (FormattedCharSequence part : font.split(line, w)) {
                 g.text(font, part, x, y, Theme.TEXT_FAINT);
@@ -393,7 +412,7 @@ public class ControlPanelScreen extends Screen {
         }
         List<Module> wouldStop = conflicts.stream().filter(Module::isRunning).toList();
         if (!module.isRunning() && !wouldStop.isEmpty()) {
-            for (FormattedCharSequence part : font.split(Component.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
+            for (FormattedCharSequence part : font.split(Compat.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
                 g.text(font, part, x, y, Theme.WARN);
                 y += 10;
             }
@@ -402,7 +421,7 @@ public class ControlPanelScreen extends Screen {
     }
 
     private int drawSettingsPage(Gfx g, String key, List<Setting> settings, int x, int y, int w, int mx, int my) {
-        y = drawPageTitle(g, Component.translatable(T + key), Component.translatable(T + key + ".desc"), x, y, w);
+        y = drawPageTitle(g, Compat.translatable(T + key), Compat.translatable(T + key + ".desc"), x, y, w);
         g.fill(x, y, x + w, y + 1, Theme.DIVIDER);
         y += 6;
         for (Setting setting : settings) {
@@ -412,7 +431,7 @@ public class ControlPanelScreen extends Screen {
     }
 
     private int drawPresetsPage(Gfx g, int x, int y, int w, int mx, int my) {
-        y = drawPageTitle(g, Component.translatable(T + "presets"), Component.translatable(T + "presets.desc"), x, y, w);
+        y = drawPageTitle(g, Compat.translatable(T + "presets"), Compat.translatable(T + "presets.desc"), x, y, w);
         int columns = w >= 2 * 140 + 6 ? 2 : 1;
         int cardW = columns == 2 ? (w - 6) / 2 : w;
         int cardH = 86;
@@ -467,17 +486,17 @@ public class ControlPanelScreen extends Screen {
             if (chipHover) {
                 g.outline(chipX, chipY, 17, 17, Theme.TEXT_DIM);
                 Module required = ModuleManager.requirementOf(module);
-                tooltip = included ? Component.translatable(T + "chip.included", module.name())
-                        : !replaces.isEmpty() ? Component.translatable(T + "chip.conflict", module.name(), Notifier.names(replaces))
-                        : required != null && !preset.includes(required) ? Component.translatable(T + "chip.adds", module.name(), required.name())
-                        : Component.translatable(T + "chip.excluded", module.name());
+                tooltip = included ? Compat.translatable(T + "chip.included", module.name())
+                        : !replaces.isEmpty() ? Compat.translatable(T + "chip.conflict", module.name(), Notifier.names(replaces))
+                        : required != null && !preset.includes(required) ? Compat.translatable(T + "chip.adds", module.name(), required.name())
+                        : Compat.translatable(T + "chip.excluded", module.name());
             }
             addHit(chipX, chipY, 17, 17, () -> preset.setIncluded(module, !included));
         }
 
         // Start / stop button, top right so the chips get the full width
         boolean usable = minecraft.player != null && !preset.modules().isEmpty();
-        Component label = Component.translatable(running ? T + "preset.stop" : T + "preset.start");
+        Component label = Compat.translatable(running ? T + "preset.stop" : T + "preset.start");
         int bw = font.width(label) + 14;
         int bx = x + w - bw - 6;
         int by = y + 6;
@@ -575,15 +594,15 @@ public class ControlPanelScreen extends Screen {
         boolean hover = key != null && inside(mx, my, x, y, CONTROL_W, 16) && inClip(mx, my);
         Theme.roundBordered(g, x, y, CONTROL_W, 16, hover || waiting ? Theme.CONTROL_HOVER : Theme.CONTROL,
                 waiting ? Theme.WARN : Theme.DIVIDER);
-        Component text = waiting ? Component.translatable(T + "press_key") : keyLabel(key, false);
+        Component text = waiting ? Compat.translatable(T + "press_key") : keyLabel(key, false);
         int color = waiting ? Theme.WARN : key == null || key.isUnbound() ? Theme.TEXT_FAINT : Theme.TEXT;
         g.centeredText(font, text, x + CONTROL_W / 2, y + 4, color);
         if (key != null && enabled) addHit(x, y, CONTROL_W, 16, () -> listening = waiting ? null : key);
     }
 
     private Component keyLabel(@Nullable KeyMapping key, boolean withPrefix) {
-        Component name = key == null || key.isUnbound() ? Component.translatable(T + "unbound") : key.getTranslatedKeyMessage();
-        return withPrefix ? Component.translatable(T + "key_prefix", name) : name;
+        Component name = key == null || key.isUnbound() ? Compat.translatable(T + "unbound") : key.getTranslatedKeyMessage();
+        return withPrefix ? Compat.translatable(T + "key_prefix", name) : name;
     }
 
     // ------------------------------------------------------------------ input

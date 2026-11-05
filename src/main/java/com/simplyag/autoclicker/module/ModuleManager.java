@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.module;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.util.Notifier;
 import net.minecraft.client.Minecraft;
@@ -120,11 +121,11 @@ public final class ModuleManager {
     /** A named combination of modules. Which modules it includes is stored in the config and editable. */
     public record Preset(String id, Item icon) {
         public Component name() {
-            return Component.translatable("smart-autoclicker.preset." + id);
+            return Compat.translatable("smart-autoclicker.preset." + id);
         }
 
         public Component description() {
-            return Component.translatable("smart-autoclicker.preset." + id + ".desc");
+            return Compat.translatable("smart-autoclicker.preset." + id + ".desc");
         }
 
         public List<Module> modules() {
@@ -219,7 +220,7 @@ public final class ModuleManager {
         for (Module module : preset.modules()) {
             module.start(false);
         }
-        Notifier.info(new ItemStack(preset.icon()), Component.translatable("smart-autoclicker.toast.preset"), preset.name());
+        Notifier.info(new ItemStack(preset.icon()), Compat.translatable("smart-autoclicker.toast.preset"), preset.name());
     }
 
     /**
@@ -245,7 +246,7 @@ public final class ModuleManager {
     /** User pressed Stop All: a calm summary instead of an alarm. */
     public static void stopAllByUser() {
         if (!anyRunning()) {
-            Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.nothing_running"), null);
+            Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.nothing_running"), null);
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -256,7 +257,7 @@ public final class ModuleManager {
         }
         stoppingAll = false;
         session = null;
-        Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.stopped_all"), summary);
+        Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.stopped_all"), summary);
     }
 
     static void beforeModuleStart() {
@@ -270,7 +271,7 @@ public final class ModuleManager {
         if (!stoppingAll && !anyRunning()) {
             Minecraft mc = Minecraft.getInstance();
             if (session != null && mc.player != null && session.elapsedMillis() > 60_000) {
-                Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.session_over"), session.summary(mc.player));
+                Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.session_over"), session.summary(mc.player));
             }
             session = null;
         }

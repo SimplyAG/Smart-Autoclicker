@@ -30,7 +30,7 @@ public final class Input {
     }
 
     public static void releaseCrouch(Options options) {
-        if (!options.toggleCrouch().get()) {
+        if (!Compat.toggleCrouch(options)) {
             release(options.keyShift);
         } else if (options.keyShift.isDown()) {
             options.keyShift.setDown(true); // Toggle Sneak ignores a release; another press turns it off

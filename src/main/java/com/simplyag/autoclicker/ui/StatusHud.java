@@ -31,13 +31,13 @@ public final class StatusHud {
 
         List<Line> lines = new ArrayList<>();
         Session session = ModuleManager.session();
-        Component header = Component.translatable("smart-autoclicker.hud.title",
+        Component header = Compat.translatable("smart-autoclicker.hud.title",
                 session == null ? "0s" : Session.formatDuration(session.elapsedMillis()));
         for (Module module : ModuleManager.ALL) {
             if (!module.isRunning()) continue;
             Component status = module.status();
             lines.add(new Line(module, status == null ? module.name()
-                    : Component.empty().append(module.name()).append(Compat.withColor(Component.literal("  ").append(status), Theme.TEXT_DIM))));
+                    : Compat.empty().append(module.name()).append(Compat.withColor(Compat.literal("  ").append(status), Theme.TEXT_DIM))));
         }
 
         int width = 8 + font.width(header);

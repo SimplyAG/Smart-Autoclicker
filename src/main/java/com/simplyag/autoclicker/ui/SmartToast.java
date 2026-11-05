@@ -11,8 +11,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 //? if >=26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-//?} else {
+//?} else if >=1.20 {
 /*import net.minecraft.client.gui.GuiGraphics;
+*///?} else {
+/*import com.mojang.blaze3d.vertex.PoseStack;
 *///?}
 //? if >=1.21.2 {
 import net.minecraft.client.gui.components.toasts.ToastManager;
@@ -129,12 +131,25 @@ public class SmartToast implements Toast {
     public void render(GuiGraphics graphics, Font font, long fullyVisibleForMs) {
         draw(new Gfx(graphics), font);
     }
-    *///?} else {
+    *///?} else if >=1.20 {
     /*@Override
     public Toast.Visibility render(GuiGraphics graphics, ToastComponent manager, long fullyVisibleForMs) {
         Font font = manager.getMinecraft().font;
         tick(font, manager.getNotificationDisplayTimeMultiplier(), fullyVisibleForMs);
         draw(new Gfx(graphics), font);
+        return visibility;
+    }
+    *///?} else {
+    /*@Override
+    public Toast.Visibility render(PoseStack pose, ToastComponent manager, long fullyVisibleForMs) {
+        Font font = manager.getMinecraft().font;
+        // The Notification Time option exists from 1.19.4; before it toasts use the default time.
+        //? if >=1.19.4 {
+        /^double multiplier = manager.getNotificationDisplayTimeMultiplier();
+        ^///?} else
+        /^double multiplier = 1.0;^/
+        tick(font, multiplier, fullyVisibleForMs);
+        draw(new Gfx(pose), font);
         return visibility;
     }
     *///?}

@@ -6,6 +6,7 @@ import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.module.ModuleManager;
 import com.simplyag.autoclicker.ui.ControlPanelScreen;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +18,7 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.Items;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Plays through each feature in a real singleplayer world and fails loudly if one doesn't work.
@@ -33,11 +35,19 @@ public final class SmartTests {
      */
     public static void prepare(TestClient context) {
         context.runOnClient(mc -> {
-            mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
             // Less work for slow machines (CI runners render in software): the lowest simulation distance, and a
             // render distance that still keeps chunks ahead of the elytra flight loaded.
+            //? if >=1.19.3 {
+            mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
+            //?} else
+            /*mc.options.setSoundCategoryVolume(SoundSource.MASTER, 0.0F);*/
+            //? if >=1.19 {
             mc.options.simulationDistance().set(5);
             mc.options.renderDistance().set(4);
+            //?} else
+            /*mc.options.renderDistance = 4;*/
+            //? if >=1.18 <1.19
+            /*mc.options.simulationDistance = 5;*/
             Compat.minimizeWindow(mc);
         });
     }
@@ -50,6 +60,8 @@ public final class SmartTests {
         server.runCommand("time set noon");
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(20);
+        // Where the tests stand: the flat world's floor, or the harness's sky arena on older versions. Flights end here.
+        start = context.computeOnClient(mc -> new double[]{mc.player.getX(), mc.player.getY(), mc.player.getZ()});
 
         testAutoAttack(context, server);
         testProtectsNamedMobs(context, server);
@@ -125,7 +137,7 @@ public final class SmartTests {
         check(drift < 3, "The camera should stay with the player, but drifted " + drift + " blocks");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
         toggleFreecam(context);
-        server.runCommand("execute as @p at @p run tp @p ~ -60 ~");
+        server.runCommand(backToStart());
         server.runCommand("clear @p");
         context.waitTicks(10);
     }
@@ -166,7 +178,7 @@ public final class SmartTests {
         context.waitTicks(5);
         check(!context.computeOnClient(mc -> mc.player.isCrouching()), "Stopping Auto Walk should stand back up");
 
-        context.runOnClient(mc -> mc.options.toggleCrouch().set(true));
+        context.runOnClient(mc -> setToggleCrouch(mc, true));
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.start(false));
         boolean steady = true;
         context.waitTicks(3);
@@ -179,7 +191,7 @@ public final class SmartTests {
         context.waitTicks(5);
         check(!context.computeOnClient(mc -> mc.options.keyShift.isDown()), "Stopping Auto Walk should release a toggled crouch");
 
-        context.runOnClient(mc -> mc.options.toggleCrouch().set(false));
+        context.runOnClient(mc -> setToggleCrouch(mc, false));
         cfg.walkCrouch = false;
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(5);
@@ -403,7 +415,7 @@ public final class SmartTests {
         check(selected == 0, "Elytra Cruise should switch back to slot 1 after firing, but slot " + (selected + 1) + " is selected");
         context.takeScreenshot("sac_elytra_arrived");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
-        server.runCommand("execute as @p at @p run tp @p ~ -60 ~");
+        server.runCommand(backToStart());
         server.runCommand("clear @p");
         context.waitTicks(20);
     }
@@ -443,6 +455,21 @@ public final class SmartTests {
         return server.overworld().getEntities(EntityTypes.HUSK, e -> e.isAlive()).size();
         //?} else
         /*return server.overworld().getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+    }
+
+    /** Where each test run stands; set at the start of {@link #run}. */
+    private static double[] start = new double[3];
+
+    /** Teleports the player back to where the tests started (after a flight). */
+    private static String backToStart() {
+        return String.format(Locale.ROOT, "tp @p %.3f %.3f %.3f", start[0], start[1], start[2]);
+    }
+
+    private static void setToggleCrouch(Minecraft mc, boolean toggle) {
+        //? if >=1.19 {
+        mc.options.toggleCrouch().set(toggle);
+        //?} else
+        /*mc.options.toggleCrouch = toggle;*/
     }
 
     /** A CustomName value for /summon: a plain string from 1.20.3, a JSON text component in quotes before. */

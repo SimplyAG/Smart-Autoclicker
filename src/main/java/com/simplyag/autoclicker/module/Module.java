@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.module;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.util.Notifier;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -32,11 +33,11 @@ public abstract class Module {
     }
 
     public Component name() {
-        return Component.translatable("smart-autoclicker.module." + id);
+        return Compat.translatable("smart-autoclicker.module." + id);
     }
 
     public Component description() {
-        return Component.translatable("smart-autoclicker.module." + id + ".desc");
+        return Compat.translatable("smart-autoclicker.module." + id + ".desc");
     }
 
     public ItemStack icon() {

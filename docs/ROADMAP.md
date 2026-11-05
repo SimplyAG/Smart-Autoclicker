@@ -25,7 +25,7 @@ most classes keep their names; the work is in APIs that changed. The main breaks
 | 1.21.9 → 1.21.8 | No `KeyMapping.Category` (categories are strings). No `KeyEvent`/`MouseButtonEvent`: screens get raw key/mouse arguments. |
 | 1.21.6 → 1.21.5 | GUI render-state rewrite: matrix stack, blit calls and tooltips differ; the screen draws its own background; HUD via `HudRenderCallback` instead of `HudElementRegistry`. |
 | 1.21.5 → 1.21.4 | Selected hotbar slot is a field, not `getSelectedSlot()`; owners are a UUID, not an `EntityReference`. |
-| 1.21.4 → 1.21.3 | No Fabric client game-test API: the same tests run through the mod's own harness (`src/harness`) in a normal dev client instead. |
+| 1.21.4 → 1.21.3 | No Fabric client game-test API: the same tests run through the mod's own harness (`src/gametest/.../harness`) in a normal dev client instead. |
 | 1.21.2 → 1.21.1 | Old toast interface (`ToastComponent`, one `render` that returns visibility); no `GLIDER` component (elytra only); blur takes the partial tick; `blit` without a render type. |
 | 1.21 → 1.20.6 | Fabric's HUD callback passes a float, not a `DeltaTracker`, so 1.20.x and 1.21.x can't share a jar. |
 | 1.20.5 → 1.20.4 | Food from `Item.getFoodProperties()`, not data components; no `entityInteractionRange`/`hasInfiniteMaterials`; no menu blur. **Java 17**: no pattern `switch`, no `Math.clamp` (shared code avoids both). |

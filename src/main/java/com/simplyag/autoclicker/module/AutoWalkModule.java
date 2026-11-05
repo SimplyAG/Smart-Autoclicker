@@ -77,6 +77,6 @@ public class AutoWalkModule extends Module {
 
     @Override
     public @Nullable Component status() {
-        return Component.translatable("smart-autoclicker.walk." + SmartConfig.get().walkDirection.name().toLowerCase());
+        return Compat.translatable("smart-autoclicker.walk." + SmartConfig.get().walkDirection.name().toLowerCase());
     }
 }

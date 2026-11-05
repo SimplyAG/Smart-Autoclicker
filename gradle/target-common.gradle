@@ -15,10 +15,12 @@ fabricApi {
 		eula = true
 	}
 }
+if (fabricClientGameTests) {
+	sourceSets.matching { it.name == 'gametest' }.configureEach { it.java.exclude 'com/simplyag/autoclicker/gametest/harness/**' }
+}
 if (!fabricClientGameTests) {
 	sourceSets.matching { it.name == 'gametest' }.configureEach { SourceSet gametest ->
 		// The harness only builds where Fabric's API is missing; the Fabric runner only where it exists.
-		gametest.java.srcDir rootProject.file('src/harness/java')
 		gametest.java.exclude 'com/simplyag/autoclicker/gametest/AutoClickerClientGameTest.java'
 		loom.runs.register('clientGameTest') {
 			client()

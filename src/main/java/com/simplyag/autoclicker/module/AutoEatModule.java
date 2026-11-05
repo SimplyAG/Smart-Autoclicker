@@ -91,7 +91,7 @@ public class AutoEatModule extends Module {
             }
             case SWITCHED -> state = State.START;
             case START -> {
-                mc.gameMode.useItem(player, hand);
+                Compat.useItem(mc, player, hand);
                 if (player.isUsingItem()) {
                     Input.hold(mc.options.keyUse);
                     state = State.EATING;
@@ -181,22 +181,22 @@ public class AutoEatModule extends Module {
             warnedLowFood = false;
         } else if (!warnedLowFood) {
             warnedLowFood = true;
-            Notifier.alert(icon(), Component.translatable("smart-autoclicker.toast.low_food"),
-                    Component.translatable("smart-autoclicker.toast.low_food.desc", left), false);
+            Notifier.alert(icon(), Compat.translatable("smart-autoclicker.toast.low_food"),
+                    Compat.translatable("smart-autoclicker.toast.low_food.desc", left), false);
         }
     }
 
     private void outOfFood() {
         if (!warnedOutOfFood) {
             warnedOutOfFood = true;
-            Notifier.alert(icon(), Component.translatable("smart-autoclicker.toast.out_of_food"),
-                    Component.translatable("smart-autoclicker.toast.out_of_food.desc"), true);
+            Notifier.alert(icon(), Compat.translatable("smart-autoclicker.toast.out_of_food"),
+                    Compat.translatable("smart-autoclicker.toast.out_of_food.desc"), true);
         }
     }
 
     @Override
     public @Nullable Component status() {
-        if (isBusy()) return Component.translatable("smart-autoclicker.status.eating");
-        return Component.translatable("smart-autoclicker.status.food_left", foodLeft);
+        if (isBusy()) return Compat.translatable("smart-autoclicker.status.eating");
+        return Compat.translatable("smart-autoclicker.status.food_left", foodLeft);
     }
 }

@@ -43,7 +43,7 @@ The tests themselves are in `src/gametest/.../SmartTests.java`, written against 
 
 - **1.21.4 and later**: Fabric API's client game-test API runs them (`AutoClickerClientGameTest`).
 - **1.20 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
-  mod's own harness (`src/harness`) into the test mod instead. It launches a normal dev client, creates a flat world
+  mod's own harness (`src/gametest/.../harness`) into the test mod instead. It launches a normal dev client, creates a flat world
   the way Fabric's test world builder does, runs the same tests and quits (exit code 1 on a failure). Differences: the
   game isn't paused between test steps, and mouse clicks go straight to the open screen.
 

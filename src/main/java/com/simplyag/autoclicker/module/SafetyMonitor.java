@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.module;
 
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.util.Inventories;
 import com.simplyag.autoclicker.util.Notifier;
@@ -33,7 +34,7 @@ public final class SafetyMonitor {
         if (lastXpLevel >= 0 && running && cfg.notifyXpLevel > 0
                 && lastXpLevel < cfg.notifyXpLevel && player.experienceLevel >= cfg.notifyXpLevel) {
             Notifier.alert(new ItemStack(Items.EXPERIENCE_BOTTLE),
-                    Component.translatable("smart-autoclicker.toast.xp_level", player.experienceLevel), null, false);
+                    Compat.translatable("smart-autoclicker.toast.xp_level", player.experienceLevel), null, false);
         }
         lastXpLevel = player.experienceLevel;
 
@@ -45,17 +46,17 @@ public final class SafetyMonitor {
         }
 
         if (player.isDeadOrDying()) {
-            ModuleManager.stopAll(Component.translatable("smart-autoclicker.toast.died"));
+            ModuleManager.stopAll(Compat.translatable("smart-autoclicker.toast.died"));
             return;
         }
         if (cfg.stopAtHealth > 0 && player.getHealth() <= cfg.stopAtHealth) {
-            ModuleManager.stopAll(Component.translatable("smart-autoclicker.toast.low_health", (int) Math.ceil(player.getHealth() / 2)));
+            ModuleManager.stopAll(Compat.translatable("smart-autoclicker.toast.low_health", (int) Math.ceil(player.getHealth() / 2)));
             return;
         }
         if (justHurt && cfg.stopWhenHitByPlayer) {
             DamageSource source = player.getLastDamageSource();
             if (source != null && source.getEntity() instanceof Player attacker && attacker != player) {
-                ModuleManager.stopAll(Component.translatable("smart-autoclicker.toast.hit_by_player", attacker.getName()));
+                ModuleManager.stopAll(Compat.translatable("smart-autoclicker.toast.hit_by_player", attacker.getName()));
                 return;
             }
         }
@@ -64,8 +65,8 @@ public final class SafetyMonitor {
         if (cfg.warnInventoryFull && collecting && Inventories.isFull(player)) {
             if (!warnedFull) {
                 warnedFull = true;
-                Notifier.alert(new ItemStack(Items.CHEST), Component.translatable("smart-autoclicker.toast.inventory_full"),
-                        Component.translatable("smart-autoclicker.toast.inventory_full.desc"), false);
+                Notifier.alert(new ItemStack(Items.CHEST), Compat.translatable("smart-autoclicker.toast.inventory_full"),
+                        Compat.translatable("smart-autoclicker.toast.inventory_full.desc"), false);
             }
         } else {
             warnedFull = false;

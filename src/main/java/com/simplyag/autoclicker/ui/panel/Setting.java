@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.ui.panel;
 
+import com.simplyag.autoclicker.util.Compat;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
  * One row in the control panel. Labels come from "smart-autoclicker.option.&lt;id&gt;",
  * hover help from "smart-autoclicker.option.&lt;id&gt;.tooltip".
  */
-public sealed interface Setting {
+public interface Setting {
     String P = "smart-autoclicker.option.";
     BooleanSupplier ALWAYS = () -> true;
 
@@ -25,11 +26,11 @@ public sealed interface Setting {
     BooleanSupplier enabled();
 
     default Component label() {
-        return Component.translatable(P + id());
+        return Compat.translatable(P + id());
     }
 
     default Component tooltip() {
-        return Component.translatable(P + id() + ".tooltip");
+        return Compat.translatable(P + id() + ".tooltip");
     }
 
     record Toggle(String id, BooleanSupplier get, Consumer<Boolean> set, BooleanSupplier enabled) implements Setting {
@@ -63,7 +64,7 @@ public sealed interface Setting {
         }
 
         public Component valueLabel() {
-            return Component.translatable(P + id + "." + get.get().name().toLowerCase());
+            return Compat.translatable(P + id + "." + get.get().name().toLowerCase());
         }
 
         public void cycle(int direction) {

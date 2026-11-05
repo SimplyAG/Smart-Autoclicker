@@ -78,14 +78,14 @@ public class ElytraCruiseModule extends Module {
         ItemStack elytra = player.getItemBySlot(EquipmentSlot.CHEST);
         int durability = Inventories.durabilityLeft(elytra);
         if (Compat.isGlider(elytra) && durability >= 0 && durability <= cfg.elytraMinDurability) {
-            stopWithReason(Component.translatable("smart-autoclicker.toast.elytra_worn", durability), true);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.elytra_worn", durability), true);
             return;
         }
 
         if (!player.isFallFlying()) {
             lastPos = null;
             if (flying && ++groundedTicks > 40) {
-                stopWithReason(Component.translatable("smart-autoclicker.toast.landed", (int) distance), false);
+                stopWithReason(Compat.translatable("smart-autoclicker.toast.landed", (int) distance), false);
             }
             return;
         }
@@ -104,7 +104,7 @@ public class ElytraCruiseModule extends Module {
         speed = Math.hypot(motion.x, motion.z) * 20;
 
         if (distance >= cfg.elytraTargetDistance) {
-            stopWithReason(Component.translatable("smart-autoclicker.toast.arrived", (int) distance), false);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.arrived", (int) distance), false);
             return;
         }
         if (Compat.screen(mc) != null) return;
@@ -158,7 +158,7 @@ public class ElytraCruiseModule extends Module {
             if (stored != -1 && Inventories.swapIntoHotbar(player, stored, Inventories.spareHotbarSlot(player))) {
                 rocketCooldown = 2;
             } else {
-                stopWithReason(Component.translatable("smart-autoclicker.toast.out_of_rockets", (int) distance), true);
+                stopWithReason(Compat.translatable("smart-autoclicker.toast.out_of_rockets", (int) distance), true);
             }
             return;
         }
@@ -174,7 +174,7 @@ public class ElytraCruiseModule extends Module {
 
     private void fire(Minecraft mc, LocalPlayer player, InteractionHand hand) {
         if (!player.getItemInHand(hand).is(Items.FIREWORK_ROCKET) || mc.gameMode == null) return;
-        mc.gameMode.useItem(player, hand);
+        Compat.useItem(mc, player, hand);
         rocketCooldown = ROCKET_COOLDOWN_TICKS;
         Session session = ModuleManager.session();
         if (session != null) session.rocketsFired++;
@@ -189,8 +189,8 @@ public class ElytraCruiseModule extends Module {
 
     @Override
     public @Nullable Component status() {
-        if (!flying) return Component.translatable("smart-autoclicker.status.waiting_takeoff");
-        return Component.translatable("smart-autoclicker.status.elytra",
+        if (!flying) return Compat.translatable("smart-autoclicker.status.waiting_takeoff");
+        return Compat.translatable("smart-autoclicker.status.elytra",
                 String.format("%,d", (int) distance), String.format("%,d", SmartConfig.get().elytraTargetDistance),
                 (int) speed, rocketsLeft);
     }

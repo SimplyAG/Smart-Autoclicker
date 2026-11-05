@@ -37,7 +37,7 @@ public final class Notifier {
         // The control panel already shows on/off; a toast there would just cover its header.
         if (Compat.screen(mc) instanceof ControlPanelScreen) return;
         toast(TOGGLE_TOKEN, module.icon(),
-                Component.translatable(on ? "smart-autoclicker.toast.on" : "smart-autoclicker.toast.off", module.name()),
+                Compat.translatable(on ? "smart-autoclicker.toast.on" : "smart-autoclicker.toast.off", module.name()),
                 on ? stopHint() : null, on ? COLOR_ON : COLOR_OFF);
     }
 
@@ -52,20 +52,20 @@ public final class Notifier {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.4f));
         }
         if (Compat.screen(mc) instanceof ControlPanelScreen) return;
-        toast(TOGGLE_TOKEN, module.icon(), Component.translatable("smart-autoclicker.toast.on", module.name()),
-                Component.translatable("smart-autoclicker.toast.replaced", names(replaced)), COLOR_ON);
+        toast(TOGGLE_TOKEN, module.icon(), Compat.translatable("smart-autoclicker.toast.on", module.name()),
+                Compat.translatable("smart-autoclicker.toast.replaced", names(replaced)), COLOR_ON);
     }
 
     /** "Auto Attack, Hold Left Click". */
     public static Component names(List<Module> modules) {
-        return ComponentUtils.formatList(modules, Component.literal(", "), Module::name);
+        return ComponentUtils.formatList(modules, Compat.literal(", "), Module::name);
     }
 
     /** "Press Z to stop everything", using whatever key Stop Everything is bound to. */
     public static @Nullable Component stopHint() {
         KeyMapping stop = AutoClickerClient.stopAllKey();
         if (stop == null || stop.isUnbound()) return null;
-        return Component.translatable("smart-autoclicker.toast.stop_hint", stop.getTranslatedKeyMessage());
+        return Compat.translatable("smart-autoclicker.toast.stop_hint", stop.getTranslatedKeyMessage());
     }
 
     public static void info(ItemStack icon, Component title, @Nullable Component message) {
@@ -83,7 +83,7 @@ public final class Notifier {
         SmartConfig cfg = SmartConfig.get();
         if (cfg.alertSounds) {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(
-                    bad ? SoundEvents.NOTE_BLOCK_BASS.value() : SoundEvents.NOTE_BLOCK_CHIME.value(), bad ? 0.7f : 1.2f, 1.0f));
+                    Compat.alertSound(bad), bad ? 0.7f : 1.2f, 1.0f));
         }
         if (cfg.flashTaskbar && !Compat.windowFocused(mc)) {
             Compat.flashWindow(mc);

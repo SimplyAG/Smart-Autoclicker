@@ -117,7 +117,7 @@ public class AutoAttackModule extends Module {
         }
         if (!toolWarned) {
             toolWarned = true;
-            stopWithReason(Component.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
         }
         return true;
     }
@@ -125,6 +125,6 @@ public class AutoAttackModule extends Module {
     @Override
     public @Nullable Component status() {
         Session session = ModuleManager.session();
-        return session == null ? null : Component.translatable("smart-autoclicker.status.hits", session.attacks);
+        return session == null ? null : Compat.translatable("smart-autoclicker.status.hits", session.attacks);
     }
 }

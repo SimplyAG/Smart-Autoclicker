@@ -45,7 +45,7 @@ public class HoldUseModule extends Module {
     public @Nullable Component status() {
         SmartConfig cfg = SmartConfig.get();
         return cfg.useMode == SmartConfig.UseMode.HOLD
-                ? Component.translatable("smart-autoclicker.status.holding")
-                : Component.translatable("smart-autoclicker.status.every_ms", cfg.useSpamDelayMs);
+                ? Compat.translatable("smart-autoclicker.status.holding")
+                : Compat.translatable("smart-autoclicker.status.every_ms", cfg.useSpamDelayMs);
     }
 }
