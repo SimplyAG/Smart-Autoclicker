@@ -130,7 +130,7 @@ public final class Gfx {
         /*raw.renderFakeItem(stack, x, y);
         *///?} else if >=1.19.4 {
         /*mc().getItemRenderer().renderGuiItem(raw, stack, x, y);
-        *///?} else {
+        *///?} else if >=1.17 {
         /*// Item rendering ignores the pose here: carry the current translation and scale over to the model-view stack.
         PoseStack modelView = RenderSystem.getModelViewStack();
         modelView.pushPose();
@@ -139,6 +139,12 @@ public final class Gfx {
         mc().getItemRenderer().renderGuiItem(stack, x, y);
         modelView.popPose();
         RenderSystem.applyModelViewMatrix();
+        *///?} else {
+        /*// Before 1.17 items render with the fixed-function matrix: carry the pose over to it.
+        RenderSystem.pushMatrix();
+        RenderSystem.multMatrix(raw.last().pose());
+        mc().getItemRenderer().renderGuiItem(stack, x, y);
+        RenderSystem.popMatrix();
         *///?}
     }
 
@@ -151,7 +157,10 @@ public final class Gfx {
         *///?} else if >=1.20 {
         /*raw.blit(AutoClickerClient.ICON_TEXTURE, x, y, size, size, 0, 0, 128, 128, 128, 128);
         *///?} else {
-        /*RenderSystem.setShaderTexture(0, AutoClickerClient.ICON_TEXTURE);
+        /*//? if >=1.17 {
+        RenderSystem.setShaderTexture(0, AutoClickerClient.ICON_TEXTURE);
+        //?} else
+        /^mc().getTextureManager().bind(AutoClickerClient.ICON_TEXTURE);^/
         RenderSystem.enableBlend();
         GuiComponent.blit(raw, x, y, size, size, 0, 0, 128, 128, 128, 128);
         RenderSystem.disableBlend();

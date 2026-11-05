@@ -64,8 +64,8 @@ public class ElytraCruiseModule extends Module {
         LocalPlayer player = mc.player;
         if (player == null || mc.gameMode == null) return;
         SmartConfig cfg = SmartConfig.get();
-        rocketsLeft = Inventories.count(player, s -> s.is(Items.FIREWORK_ROCKET))
-                + (player.getOffhandItem().is(Items.FIREWORK_ROCKET) ? player.getOffhandItem().getCount() : 0);
+        rocketsLeft = Inventories.count(player, s -> s.getItem() == Items.FIREWORK_ROCKET)
+                + (player.getOffhandItem().getItem() == Items.FIREWORK_ROCKET ? player.getOffhandItem().getCount() : 0);
 
         // A rocket queued last tick after switching to it: fire it now, then switch back.
         if (rocketQueued) {
@@ -131,9 +131,9 @@ public class ElytraCruiseModule extends Module {
             camera.setPos(camera.getX() + moved.x, camera.getY() + moved.y, camera.getZ() + moved.z);
         }
         if (cfg.elytraCameraSteer) {
-            float yaw = player.getYRot();
+            float yaw = Compat.yRot(player);
             player.yRotO = yaw;
-            player.setYRot(yaw + Mth.clamp(Mth.wrapDegrees(camera.getYRot() - yaw), -MAX_YAW_STEP, MAX_YAW_STEP));
+            Compat.setYRot(player, yaw + Mth.clamp(Mth.wrapDegrees(Compat.yRot(camera) - yaw), -MAX_YAW_STEP, MAX_YAW_STEP));
         }
     }
 
@@ -141,14 +141,14 @@ public class ElytraCruiseModule extends Module {
     private void holdAltitude(LocalPlayer player) {
         double below = targetY - player.getY();
         float desired = (float) Mth.clamp(-4 - below * 1.5, -30, 15);
-        float pitch = player.getXRot();
+        float pitch = Compat.xRot(player);
         float next = pitch + Mth.clamp(desired - pitch, -MAX_PITCH_STEP, MAX_PITCH_STEP);
         player.xRotO = pitch;
-        player.setXRot(next);
+        Compat.setXRot(player, next);
     }
 
     private void useRocket(Minecraft mc, LocalPlayer player) {
-        if (player.getOffhandItem().is(Items.FIREWORK_ROCKET)) {
+        if (player.getOffhandItem().getItem() == Items.FIREWORK_ROCKET) {
             fire(mc, player, InteractionHand.OFF_HAND);
             return;
         }
@@ -162,18 +162,18 @@ public class ElytraCruiseModule extends Module {
             }
             return;
         }
-        int selected = Compat.selectedSlot(player.getInventory());
+        int selected = Compat.selectedSlot(Compat.inventory(player));
         if (slot == selected) {
             fire(mc, player, InteractionHand.MAIN_HAND);
         } else {
             previousSlot = selected;
-            Compat.selectSlot(player.getInventory(), slot);
+            Compat.selectSlot(Compat.inventory(player), slot);
             rocketQueued = true; // fire next tick, once the slot change has reached the server
         }
     }
 
     private void fire(Minecraft mc, LocalPlayer player, InteractionHand hand) {
-        if (!player.getItemInHand(hand).is(Items.FIREWORK_ROCKET) || mc.gameMode == null) return;
+        if (player.getItemInHand(hand).getItem() != Items.FIREWORK_ROCKET || mc.gameMode == null) return;
         Compat.useItem(mc, player, hand);
         rocketCooldown = ROCKET_COOLDOWN_TICKS;
         Session session = ModuleManager.session();
@@ -182,7 +182,7 @@ public class ElytraCruiseModule extends Module {
 
     private void restoreSlot(@Nullable LocalPlayer player) {
         if (player != null && previousSlot >= 0) {
-            Compat.selectSlot(player.getInventory(), previousSlot);
+            Compat.selectSlot(Compat.inventory(player), previousSlot);
         }
         previousSlot = -1;
     }

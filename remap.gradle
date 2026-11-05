@@ -47,5 +47,9 @@ dependencies {
 	compileOnly "org.jspecify:jspecify:1.0.0"
 }
 
+// Fabric API's mod id: "fabric" before 26.1. Releases up to 1.19.1 only have that id, and later 1.x releases (id
+// "fabric-api") still provide it, so depending on "fabric" works with every Fabric API a player may have.
+ext.sacFabricApiId = 'fabric'
+
 // Resources, Java level, jar contents and the in-game tests: shared with build.gradle.
 apply from: rootProject.file('gradle/target-common.gradle')

@@ -9,7 +9,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -58,7 +58,12 @@ public final class Notifier {
 
     /** "Auto Attack, Hold Left Click". */
     public static Component names(List<Module> modules) {
-        return ComponentUtils.formatList(modules, Compat.literal(", "), Module::name);
+        MutableComponent names = Compat.empty();
+        for (int i = 0; i < modules.size(); i++) {
+            if (i > 0) names.append(", ");
+            names.append(modules.get(i).name());
+        }
+        return names;
     }
 
     /** "Press Z to stop everything", using whatever key Stop Everything is bound to. */

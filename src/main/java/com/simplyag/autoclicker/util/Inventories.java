@@ -51,7 +51,7 @@ public final class Inventories {
     }
 
     private static int bestSlot(LocalPlayer player, int from, int to) {
-        Inventory inventory = player.getInventory();
+        Inventory inventory = Compat.inventory(player);
         int best = -1;
         float bestScore = 0;
         for (int slot = from; slot < to; slot++) {
@@ -71,7 +71,7 @@ public final class Inventories {
     }
 
     public static int count(LocalPlayer player, Predicate<ItemStack> filter) {
-        Inventory inventory = player.getInventory();
+        Inventory inventory = Compat.inventory(player);
         int total = 0;
         for (int slot = 0; slot < MAIN_SIZE; slot++) {
             ItemStack stack = inventory.getItem(slot);
@@ -83,7 +83,7 @@ public final class Inventories {
     /** First hotbar slot holding this item, or -1. */
     public static int findHotbar(LocalPlayer player, Item item) {
         for (int slot = 0; slot < HOTBAR_SIZE; slot++) {
-            if (player.getInventory().getItem(slot).is(item)) return slot;
+            if (Compat.inventory(player).getItem(slot).getItem() == item) return slot;
         }
         return -1;
     }
@@ -91,7 +91,7 @@ public final class Inventories {
     /** First main-inventory slot (9-35) holding this item, or -1. */
     public static int findInventory(LocalPlayer player, Item item) {
         for (int slot = HOTBAR_SIZE; slot < MAIN_SIZE; slot++) {
-            if (player.getInventory().getItem(slot).is(item)) return slot;
+            if (Compat.inventory(player).getItem(slot).getItem() == item) return slot;
         }
         return -1;
     }
@@ -101,7 +101,7 @@ public final class Inventories {
      * otherwise the last slot that isn't currently selected (so the weapon in hand stays put).
      */
     public static int spareHotbarSlot(LocalPlayer player) {
-        Inventory inventory = player.getInventory();
+        Inventory inventory = Compat.inventory(player);
         int selected = Compat.selectedSlot(inventory);
         for (int slot = HOTBAR_SIZE - 1; slot >= 0; slot--) {
             if (slot != selected && inventory.getItem(slot).isEmpty()) return slot;
@@ -122,7 +122,7 @@ public final class Inventories {
     }
 
     public static boolean isFull(LocalPlayer player) {
-        return player.getInventory().getFreeSlot() == -1;
+        return Compat.inventory(player).getFreeSlot() == -1;
     }
 
     /** Durability left before the item breaks, or -1 if it can't break. */

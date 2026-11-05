@@ -27,8 +27,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.lwjgl.glfw.GLFW;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,7 @@ import java.util.stream.Stream;
  * mouse clicks go straight to the open screen at the cursor position.
  */
 public class TestHarness implements Runnable, TestClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Smart Autoclicker test harness");
+    private static final Logger LOGGER = LogManager.getLogger("Smart Autoclicker test harness");
     private static final long TIMEOUT_MINUTES = 20;
 
     private final Object tickLock = new Object();
@@ -310,8 +310,8 @@ public class TestHarness implements Runnable, TestClient {
             public void pressKey(int key) {
                 runOnClient(mc -> {
                     long window = mc.getWindow().getWindow();
-                    mc.keyboardHandler.keyPress(window, key, 0, InputConstants.PRESS, 0);
-                    mc.keyboardHandler.keyPress(window, key, 0, InputConstants.RELEASE, 0);
+                    mc.keyboardHandler.keyPress(window, key, 0, GLFW.GLFW_PRESS, 0);
+                    mc.keyboardHandler.keyPress(window, key, 0, GLFW.GLFW_RELEASE, 0);
                 });
                 waitTick();
             }

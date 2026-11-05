@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.OwnableEntity;
 //? if >=1.21.11 {
 import net.minecraft.world.entity.animal.golem.AbstractGolem;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
@@ -86,8 +85,8 @@ public class AutoAttackModule extends Module {
     /** What the player itself is looking at: the nearest entity within reach that no block is in front of. */
     private static @Nullable EntityHitResult pickFromPlayer(Minecraft mc, LocalPlayer player) {
         double range = Compat.entityReach(player);
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = Compat.viewVector(player.getXRot(), player.getYRot());
+        Vec3 eye = Compat.eyePosition(player);
+        Vec3 look = Compat.viewVector(Compat.xRot(player), Compat.yRot(player));
         Vec3 end = eye.add(look.scale(range));
         HitResult block = mc.level.clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
         double maxSqr = block.getType() == HitResult.Type.MISS ? range * range : block.getLocation().distanceToSqr(eye);
@@ -102,7 +101,7 @@ public class AutoAttackModule extends Module {
         if (target instanceof ArmorStand) return cfg.attackArmorStands;
         if (cfg.protectNamedAndTamed) {
             if (target.hasCustomName()) return false;
-            if (target instanceof OwnableEntity && Compat.hasOwner((OwnableEntity) target)) return false;
+            if (Compat.isOwnedPet(target)) return false;
             if (target instanceof AbstractVillager || target instanceof AbstractGolem) return false;
         }
         return target instanceof Enemy ? cfg.attackHostiles : cfg.attackPassives;

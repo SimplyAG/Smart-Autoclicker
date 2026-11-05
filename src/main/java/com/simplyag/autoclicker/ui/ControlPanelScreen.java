@@ -716,7 +716,7 @@ public class ControlPanelScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         KeyMapping openKey = AutoClickerClient.openPanelKey();
-        return key(keyCode, keyCode == InputConstants.KEY_ESCAPE, InputConstants.getKey(keyCode, scanCode),
+        return key(keyCode, keyCode == Compat.KEY_ESCAPE, InputConstants.getKey(keyCode, scanCode),
                 openKey != null && openKey.matches(keyCode, scanCode))
                 || super.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -763,8 +763,8 @@ public class ControlPanelScreen extends Screen {
             return true;
         }
         // Up/down arrows move between pages
-        if (keyCode == InputConstants.KEY_DOWN || keyCode == InputConstants.KEY_UP) {
-            int index = pages.indexOf(page) + (keyCode == InputConstants.KEY_DOWN ? 1 : -1);
+        if (keyCode == Compat.KEY_DOWN || keyCode == Compat.KEY_UP) {
+            int index = pages.indexOf(page) + (keyCode == Compat.KEY_DOWN ? 1 : -1);
             selectPage(pages.get(Math.floorMod(index, pages.size())));
             return true;
         }

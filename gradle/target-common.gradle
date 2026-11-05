@@ -51,12 +51,14 @@ processResources {
 	inputs.property "minecraft_dep", sacMinecraftDepItems
 	inputs.property "java_version", javaVersion
 	inputs.property "loader_floor", project.loader_floor
+	inputs.property "fabric_api_id", sacFabricApiId
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version,
 				"minecraft_dep": sacMinecraftDepItems,
 				"java_version": javaVersion,
-				"loader_floor": project.loader_floor
+				"loader_floor": project.loader_floor,
+				"fabric_api_id": sacFabricApiId
 	}
 
 	// The shared mixins.json says JAVA_21; Mixin refuses levels the running Java can't do, so set it per target.
@@ -66,7 +68,8 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = javaVersion
+	// javac 8 has no --release flag; it only targets Java 8 anyway.
+	if (javaVersion > 8) it.options.release = javaVersion
 	it.options.encoding = "UTF-8"
 	// One fixed javac per target, whatever JDK runs Gradle: javac versions number lambdas differently, which would
 	// make otherwise identical classes differ between a group's members.

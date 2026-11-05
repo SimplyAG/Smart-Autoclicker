@@ -10,6 +10,7 @@ import com.simplyag.autoclicker.ui.StatusHud;
 import com.simplyag.autoclicker.util.Compat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+//? if >=1.16.4
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -18,15 +19,24 @@ import net.minecraft.resources.Identifier;
 //?} else
 /*import net.minecraft.resources.ResourceLocation;*/
 import org.jspecify.annotations.Nullable;
+//? if >=1.17 {
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+//?} else {
+/*import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+*///?}
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AutoClickerClient implements ClientModInitializer {
     public static final String MOD_ID = "smart-autoclicker";
+    // slf4j ships with Minecraft from 1.17; before it, log4j (same calls).
+    //? if >=1.17 {
     public static final Logger LOGGER = LoggerFactory.getLogger("Smart Autoclicker");
+    //?} else
+    /*public static final Logger LOGGER = LogManager.getLogger("Smart Autoclicker");*/
 
     //? if >=1.21.11 {
     public static final Identifier ICON_TEXTURE = id("icon.png");
@@ -36,6 +46,8 @@ public class AutoClickerClient implements ClientModInitializer {
     private static KeyMapping openPanelKey;
     private static KeyMapping stopAllKey;
     private static final List<PresetKey> presetKeys = new ArrayList<>();
+    //? if <1.16.4
+    /*private static boolean inWorld;*/
 
     private static final class PresetKey {
         private final ModuleManager.Preset preset;
@@ -96,18 +108,27 @@ public class AutoClickerClient implements ClientModInitializer {
             ModuleManager.tick(client);
             SafetyMonitor.tick(client);
         });
+        // Leaving a world stops everything. Fabric API has a disconnect event from its 1.16.4 builds; before, watch
+        // for the world going away.
+        //? if >=1.16.4 {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> ModuleManager.stopAll(null)));
+        //?} else {
+        /*ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.level == null && inWorld) ModuleManager.stopAll(null);
+            inWorld = client.level != null;
+        });
+        *///?}
         Compat.registerHud("status", StatusHud::draw);
     }
 
     private static void registerKeys() {
-        openPanelKey = register("open_panel", InputConstants.KEY_K);
-        stopAllKey = register("stop_all", InputConstants.KEY_Z);
+        openPanelKey = register("open_panel", Compat.KEY_K);
+        stopAllKey = register("stop_all", Compat.KEY_Z);
         for (ModuleManager.Preset preset : ModuleManager.PRESETS) {
             presetKeys.add(new PresetKey(preset, register("preset." + preset.id(), InputConstants.UNKNOWN.getValue())));
         }
         for (Module module : ModuleManager.ALL) {
-            int defaultKey = module == ModuleManager.AUTO_WALK ? InputConstants.KEY_H : InputConstants.UNKNOWN.getValue();
+            int defaultKey = module == ModuleManager.AUTO_WALK ? Compat.KEY_H : InputConstants.UNKNOWN.getValue();
             module.setToggleKey(register("toggle." + module.id(), defaultKey));
         }
     }

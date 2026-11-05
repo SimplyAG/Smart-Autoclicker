@@ -20,7 +20,18 @@ import net.minecraft.network.chat.TranslatableComponent;
 *///?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+//? if >=1.17 {
 import net.minecraft.world.entity.OwnableEntity;
+//?} else {
+/*import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+*///?}
+//? if >=1.16 <1.17
+/*import net.minecraft.network.chat.TextColor;*/
+//? if <1.16
+/*import net.minecraft.ChatFormatting;*/
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
@@ -83,12 +94,85 @@ public final class Compat {
         /*inventory.selected = slot;*/
     }
 
-    /** Whether a pet or other ownable mob belongs to someone. */
-    public static boolean hasOwner(OwnableEntity entity) {
+    /** Whether a mob is someone's pet (a tamed wolf, cat, parrot, horse...). */
+    public static boolean isOwnedPet(Entity entity) {
         //? if >=1.21.5 {
-        return entity.getOwnerReference() != null;
+        return entity instanceof OwnableEntity && ((OwnableEntity) entity).getOwnerReference() != null;
+        //?} else if >=1.17 {
+        /*return entity instanceof OwnableEntity && ((OwnableEntity) entity).getOwnerUUID() != null;
+        *///?} else {
+        /*return entity instanceof TamableAnimal && ((TamableAnimal) entity).getOwnerUUID() != null
+                || entity instanceof AbstractHorse && ((AbstractHorse) entity).getOwnerUUID() != null;
+        *///?}
+    }
+
+    // Keyboard keys the mod binds or checks. InputConstants has them from 1.17 (SDL codes from 26.3); before, the
+    // same GLFW key codes.
+    //? if >=1.17 {
+    public static final int KEY_K = InputConstants.KEY_K;
+    public static final int KEY_Z = InputConstants.KEY_Z;
+    public static final int KEY_H = InputConstants.KEY_H;
+    public static final int KEY_ESCAPE = InputConstants.KEY_ESCAPE;
+    public static final int KEY_UP = InputConstants.KEY_UP;
+    public static final int KEY_DOWN = InputConstants.KEY_DOWN;
+    //?} else {
+    /*public static final int KEY_K = 75;
+    public static final int KEY_Z = 90;
+    public static final int KEY_H = 72;
+    public static final int KEY_ESCAPE = 256;
+    public static final int KEY_UP = 265;
+    public static final int KEY_DOWN = 264;
+    *///?}
+
+    // Rotation, inventory and abilities became getters in 1.17; before they were public fields.
+    public static float xRot(Entity entity) {
+        //? if >=1.17 {
+        return entity.getXRot();
         //?} else
-        /*return entity.getOwnerUUID() != null;*/
+        /*return entity.xRot;*/
+    }
+
+    public static float yRot(Entity entity) {
+        //? if >=1.17 {
+        return entity.getYRot();
+        //?} else
+        /*return entity.yRot;*/
+    }
+
+    public static void setXRot(Entity entity, float xRot) {
+        //? if >=1.17 {
+        entity.setXRot(xRot);
+        //?} else
+        /*entity.xRot = xRot;*/
+    }
+
+    public static void setYRot(Entity entity, float yRot) {
+        //? if >=1.17 {
+        entity.setYRot(yRot);
+        //?} else
+        /*entity.yRot = yRot;*/
+    }
+
+    public static Inventory inventory(Player player) {
+        //? if >=1.17 {
+        return player.getInventory();
+        //?} else
+        /*return player.inventory;*/
+    }
+
+    /** Where the entity's eyes are this tick. */
+    public static Vec3 eyePosition(Entity entity) {
+        //? if >=1.17 {
+        return entity.getEyePosition();
+        //?} else
+        /*return entity.getEyePosition(1.0F);*/
+    }
+
+    private static boolean instabuild(Player player) {
+        //? if >=1.17 {
+        return player.getAbilities().instabuild;
+        //?} else
+        /*return player.abilities.instabuild;*/
     }
 
     /** Translated text. Component.translatable/literal/empty exist from 1.19; before it they were classes. */
@@ -142,7 +226,7 @@ public final class Compat {
         //? if >=1.20.5 {
         return player.entityInteractionRange();
         //?} else
-        /*return player.getAbilities().instabuild ? 6.0 : 3.0;*/
+        /*return instabuild(player) ? 6.0 : 3.0;*/
     }
 
     /** Creative mode: no hunger, no item use-up. */
@@ -150,15 +234,19 @@ public final class Compat {
         //? if >=1.20.5 {
         return player.hasInfiniteMaterials();
         //?} else
-        /*return player.getAbilities().instabuild;*/
+        /*return instabuild(player);*/
     }
 
     /** Colours a text component with an ARGB/RGB colour. */
     public static MutableComponent withColor(MutableComponent text, int color) {
         //? if >=1.20.3 {
         return text.withColor(color);
-        //?} else
-        /*return text.withStyle(style -> style.withColor(color & 0xFFFFFF));*/
+        //?} else if >=1.17 {
+        /*return text.withStyle(style -> style.withColor(color & 0xFFFFFF));
+        *///?} else if >=1.16 {
+        /*return text.withStyle(style -> style.withColor(TextColor.fromRgb(color & 0xFFFFFF)));
+        *///?} else
+        /*return text.withStyle(ChatFormatting.GRAY);*/
     }
 
     /** A food item's properties, or null if it isn't food. */
@@ -190,7 +278,7 @@ public final class Compat {
         //? if >=1.21.2 {
         return stack.has(DataComponents.GLIDER);
         //?} else
-        /*return stack.is(Items.ELYTRA);*/
+        /*return stack.getItem() == Items.ELYTRA;*/
     }
 
     public static @Nullable Screen screen(Minecraft mc) {
@@ -276,8 +364,8 @@ public final class Compat {
      * from an instance to a static method and also follows a Freecam camera on some versions.
      */
     public static Vec3 viewVector(float xRot, float yRot) {
-        float pitch = xRot * Mth.DEG_TO_RAD;
-        float yaw = -yRot * Mth.DEG_TO_RAD;
+        float pitch = xRot * ((float) (Math.PI / 180));
+        float yaw = -yRot * ((float) (Math.PI / 180));
         float horizontal = Mth.cos(pitch);
         return new Vec3(Mth.sin(yaw) * horizontal, -Mth.sin(pitch), Mth.cos(yaw) * horizontal);
     }
