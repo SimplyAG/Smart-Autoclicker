@@ -1,6 +1,6 @@
 # Minecraft version roadmap
 
-Goal: one source tree covering Minecraft 1.14.4 → latest on Fabric, with as few jars as possible (see release
+Goal (reached): one source tree covering Minecraft 1.14.4 → latest on Fabric, with as few jars as possible (see release
 groups in `CONTRIBUTING.md`). Each phase below is shippable on its own; newer versions come first because most
 players are there.
 
@@ -9,8 +9,8 @@ players are there.
 | 1 | 26.1 – 26.3 | **Done**: 3 jars (26.1–26.1.2 share one), in-game tests on every version |
 | 2 | 1.21 – 1.21.11 | **Done**: 6 jars for the 12 versions, in-game tests on every version (Fabric's game tests from 1.21.4, the mod's own harness before) |
 | 3 | 1.20 – 1.20.6 | **Done**: 4 jars for the 7 versions, in-game tests on every version (the mod's own harness) |
-| 4 | 1.17 – 1.19.4 | Planned |
-| 5 | 1.14.4 – 1.16.5 | Planned |
+| 4 | 1.17 – 1.19.4 | **Done**: 4 jars for the 10 versions (1.17 – 1.18.2 share one), in-game tests on every version |
+| 5 | 1.14.4 – 1.16.5 | **Done**: 4 jars for the 10 versions, in-game tests on every version, Java 8 |
 
 ## What changes going back
 
@@ -31,8 +31,15 @@ most classes keep their names; the work is in APIs that changed. The main breaks
 | 1.20.5 → 1.20.4 | Food from `Item.getFoodProperties()`, not data components; no `entityInteractionRange`/`hasInfiniteMaterials`; no menu blur. **Java 17**: no pattern `switch`, no `Math.clamp` (shared code avoids both). |
 | 1.20.3 → 1.20.2 | No `MutableComponent.withColor`; `/summon` names are JSON text in quotes (tests). |
 | 1.20.2 → 1.20.1 | `Screen.renderBackground(GuiGraphics)` and `mouseScrolled(x, y, delta)` take fewer arguments. |
-| 1.20 → 1.19.4 | No `GuiGraphics`: drawing goes through `PoseStack` and `GuiComponent`. |
-| 1.17 → 1.16.5 | **Java 8**: records, sealed interfaces, pattern-matching `switch` and `instanceof` patterns must be rewritten as plain classes. Plan this as its own refactor before phase 5. |
+| 1.20 → 1.19.4 | No `GuiGraphics`: drawing goes through `PoseStack` and `GuiComponent` (`ui/Gfx`). Items render without the pose before 1.19.4. |
+| 1.19.4 → 1.19.3 | Create World screen has no world-type API: the test harness builds a sky arena instead. No Notification Time option. |
+| 1.19.3 → 1.19.2 | Sounds are plain `SoundEvent`s, not holders. |
+| 1.19 → 1.18.2 | `Component.literal/translatable` are classes (`TextComponent`, `TranslatableComponent`); options are fields, not `OptionInstance`. Fabric API releases up to 1.19.1 only answer to the mod id `fabric`, so 1.x jars depend on that id. |
+| 1.18 → 1.17.1 | Java 16 (the 1.17 jar, compiled for 16, also runs 1.18 – 1.18.2). |
+| 1.17 → 1.16.5 | **Java 8** (the shared code is Java 8 throughout). Rotation, inventory and abilities are fields; no `OwnableEntity`; log4j instead of slf4j; items render with the fixed-function matrix. |
+| 1.16.2 → 1.16.1 | No `FormattedCharSequence`: wrapped lines are a small stand-in type (`ui/legacy`). |
+| 1.16 → 1.15.2 | No `PoseStack` in menus, no `MutableComponent`, text is drawn from strings; toasts have a fixed 160 x 32 slot. |
+| 1.15 → 1.14.4 | No HUD callback in Fabric API (a `Gui` mixin draws the HUD), no `KeyMapping.setDown`, no Toggle Sneak, `GlStateManager` instead of `RenderSystem`. |
 
 Mod Menu and Freecam don't exist for every old version; those integrations stay optional and are tested only where
 a build exists.

@@ -10,7 +10,7 @@ import com.simplyag.autoclicker.ui.StatusHud;
 import com.simplyag.autoclicker.util.Compat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-//? if >=1.16.4
+//? if >=1.17
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -46,7 +46,7 @@ public class AutoClickerClient implements ClientModInitializer {
     private static KeyMapping openPanelKey;
     private static KeyMapping stopAllKey;
     private static final List<PresetKey> presetKeys = new ArrayList<>();
-    //? if <1.16.4
+    //? if <1.17
     /*private static boolean inWorld;*/
 
     private static final class PresetKey {
@@ -108,9 +108,9 @@ public class AutoClickerClient implements ClientModInitializer {
             ModuleManager.tick(client);
             SafetyMonitor.tick(client);
         });
-        // Leaving a world stops everything. Fabric API has a disconnect event from its 1.16.4 builds; before, watch
-        // for the world going away.
-        //? if >=1.16.4 {
+        // Leaving a world stops everything: Fabric API's disconnect event from 1.17. Before, watch for the world going
+        // away (the event only exists in late 1.16 builds; this lets all of 1.16.2 - 1.16.5 share one jar).
+        //? if >=1.17 {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> ModuleManager.stopAll(null)));
         //?} else {
         /*ClientTickEvents.END_CLIENT_TICK.register(client -> {

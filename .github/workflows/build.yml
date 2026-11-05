@@ -29,7 +29,8 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          # 17 builds and runs 1.20-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
+          # 17 builds and runs 1.18-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
+          # Java 8 (1.14-1.16) and 16 (1.17) are downloaded by Gradle's toolchain resolver (foojay).
           java-version: |
             17
             21
@@ -48,6 +49,8 @@ jobs:
   gametest:
     needs: versions
     runs-on: ubuntu-24.04
+    # A game that can't start shows an error window and waits; don't let that hold a runner for hours.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +60,8 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          # 17 builds and runs 1.20-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
+          # 17 builds and runs 1.18-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
+          # Java 8 (1.14-1.16) and 16 (1.17) are downloaded by Gradle's toolchain resolver (foojay).
           java-version: |
             17
             21
