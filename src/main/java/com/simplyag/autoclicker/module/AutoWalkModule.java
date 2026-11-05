@@ -67,12 +67,16 @@ public class AutoWalkModule extends Module {
     }
 
     private static KeyMapping keyFor(Options options, SmartConfig.WalkDirection direction) {
-        return switch (direction) {
-            case FORWARD -> options.keyUp;
-            case BACKWARD -> options.keyDown;
-            case LEFT -> options.keyLeft;
-            case RIGHT -> options.keyRight;
-        };
+        switch (direction) {
+            case BACKWARD:
+                return options.keyDown;
+            case LEFT:
+                return options.keyLeft;
+            case RIGHT:
+                return options.keyRight;
+            default:
+                return options.keyUp;
+        }
     }
 
     @Override

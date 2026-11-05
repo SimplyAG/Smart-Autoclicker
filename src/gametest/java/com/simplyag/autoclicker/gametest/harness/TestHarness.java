@@ -201,9 +201,9 @@ public class TestHarness implements Runnable, TestClient {
     private static Button findButton(ContainerEventHandler parent, String translationKey) {
         Component label = Compat.translatable(translationKey);
         for (GuiEventListener child : parent.children()) {
-            if (child instanceof Button button && button.getMessage().equals(label)) return button;
-            if (child instanceof ContainerEventHandler container) {
-                Button found = findButton(container, translationKey);
+            if (child instanceof Button && ((Button) child).getMessage().getString().equals(label.getString())) return (Button) child;
+            if (child instanceof ContainerEventHandler) {
+                Button found = findButton((ContainerEventHandler) child, translationKey);
                 if (found != null) return found;
             }
         }
@@ -231,8 +231,8 @@ public class TestHarness implements Runnable, TestClient {
     }
 
     private static RuntimeException rethrow(Throwable cause) {
-        if (cause instanceof RuntimeException runtime) throw runtime;
-        if (cause instanceof Error error) throw error;
+        if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+        if (cause instanceof Error) throw (Error) cause;
         throw new RuntimeException(cause);
     }
 
@@ -335,7 +335,13 @@ public class TestHarness implements Runnable, TestClient {
         };
     }
 
-    private record HarnessServer(MinecraftServer server) implements TestClient.Server {
+    private static final class HarnessServer implements TestClient.Server {
+        private final MinecraftServer server;
+
+        HarnessServer(MinecraftServer server) {
+            this.server = server;
+        }
+
         @Override
         public void runCommand(String command) {
             //? if >=1.19 {

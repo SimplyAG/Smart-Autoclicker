@@ -82,15 +82,17 @@ public class AutoEatModule extends Module {
         }
 
         switch (state) {
-            case IDLE -> {
+            case IDLE:
                 if (waitTicks > 0) {
                     waitTicks--;
                 } else if (needsFood(player)) {
                     beginEating(mc, player);
                 }
-            }
-            case SWITCHED -> state = State.START;
-            case START -> {
+                break;
+            case SWITCHED:
+                state = State.START;
+                break;
+            case START:
                 Compat.useItem(mc, player, hand);
                 if (player.isUsingItem()) {
                     Input.hold(mc.options.keyUse);
@@ -101,17 +103,17 @@ public class AutoEatModule extends Module {
                     reset();
                     waitTicks = 100;
                 }
-            }
-            case EATING -> {
+                break;
+            case EATING:
                 if (player.isUsingItem() && ++eatTicks < MAX_EAT_TICKS) {
                     Input.hold(mc.options.keyUse);
                 } else {
                     finishEating(mc, player);
                 }
-            }
-            case COOLDOWN -> {
+                break;
+            case COOLDOWN:
                 if (--waitTicks <= 0) state = State.IDLE;
-            }
+                break;
         }
     }
 

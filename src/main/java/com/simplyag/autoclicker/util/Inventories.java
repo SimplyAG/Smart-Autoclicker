@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.util;
 
+import com.google.common.collect.ImmutableSet;
 import com.simplyag.autoclicker.config.SmartConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -17,10 +18,10 @@ public final class Inventories {
     public static final int MAIN_SIZE = 36;
 
     /** Foods that poison, hurt, starve or teleport you. Never auto-eaten. */
-    private static final Set<Item> HARMFUL_FOOD = Set.of(
+    private static final Set<Item> HARMFUL_FOOD = ImmutableSet.of(
             Items.ROTTEN_FLESH, Items.SPIDER_EYE, Items.POISONOUS_POTATO, Items.PUFFERFISH,
             Items.CHICKEN, Items.SUSPICIOUS_STEW, Items.CHORUS_FRUIT);
-    private static final Set<Item> GOLDEN_FOOD = Set.of(Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE);
+    private static final Set<Item> GOLDEN_FOOD = ImmutableSet.of(Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE);
 
     private Inventories() {
     }

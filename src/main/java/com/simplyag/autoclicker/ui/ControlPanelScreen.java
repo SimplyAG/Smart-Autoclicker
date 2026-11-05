@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.AutoClickerClient;
@@ -27,8 +28,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 //? if >=26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?} else if >=1.20 {
@@ -60,30 +63,85 @@ public class ControlPanelScreen extends Screen {
 
     private enum Kind { PRESETS, MODULE, SAFETY, GENERAL }
 
-    private record Page(Kind kind, @Nullable Module module) {
+    /** A sidebar page. Equal by kind and module, so the page remembered from the last time the panel was open matches. */
+    private static final class Page {
+        private final Kind kind;
+        private final @Nullable Module module;
+
+        Page(Kind kind, @Nullable Module module) {
+            this.kind = kind;
+            this.module = module;
+        }
+
+        Kind kind() {
+            return kind;
+        }
+
+        @Nullable Module module() {
+            return module;
+        }
+
         Component name() {
-            return switch (kind) {
-                case MODULE -> module.name();
-                default -> Compat.translatable(T + kind.name().toLowerCase());
-            };
+            return kind == Kind.MODULE ? module.name() : Compat.translatable(T + kind.name().toLowerCase());
         }
 
         ItemStack icon() {
-            return switch (kind) {
-                case PRESETS -> new ItemStack(Items.NETHER_STAR);
-                case MODULE -> module.icon();
-                case SAFETY -> new ItemStack(Items.TOTEM_OF_UNDYING);
-                case GENERAL -> new ItemStack(Items.COMPARATOR);
-            };
+            switch (kind) {
+                case PRESETS:
+                    return new ItemStack(Items.NETHER_STAR);
+                case MODULE:
+                    return module.icon();
+                case SAFETY:
+                    return new ItemStack(Items.TOTEM_OF_UNDYING);
+                default:
+                    return new ItemStack(Items.COMPARATOR);
+            }
         }
 
         int accent() {
             return kind == Kind.MODULE ? module.color() : Theme.ACCENT;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Page && ((Page) o).kind == kind && ((Page) o).module == module;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(kind, module);
+        }
     }
 
-    private record Hit(int x0, int y0, int x1, int y1, @Nullable Runnable click, @Nullable DoubleConsumer drag,
-                       @Nullable IntConsumer wheel) {
+    /** A clickable, draggable or scrollable rectangle, collected while drawing. */
+    private static final class Hit {
+        private final int x0, y0, x1, y1;
+        private final @Nullable Runnable click;
+        private final @Nullable DoubleConsumer drag;
+        private final @Nullable IntConsumer wheel;
+
+        Hit(int x0, int y0, int x1, int y1, @Nullable Runnable click, @Nullable DoubleConsumer drag, @Nullable IntConsumer wheel) {
+            this.x0 = x0;
+            this.y0 = y0;
+            this.x1 = x1;
+            this.y1 = y1;
+            this.click = click;
+            this.drag = drag;
+            this.wheel = wheel;
+        }
+
+        @Nullable Runnable click() {
+            return click;
+        }
+
+        @Nullable DoubleConsumer drag() {
+            return drag;
+        }
+
+        @Nullable IntConsumer wheel() {
+            return wheel;
+        }
+
         boolean contains(double x, double y) {
             return x >= x0 && x < x1 && y >= y0 && y < y1;
         }
@@ -292,11 +350,8 @@ public class ControlPanelScreen extends Screen {
         g.item(p.icon(), x + 5, y + 2);
         g.text(font, p.name(), x + 25, y + 6, selected ? Theme.TEXT : Theme.TEXT_DIM);
 
-        boolean active = switch (p.kind()) {
-            case MODULE -> p.module().isRunning();
-            case PRESETS -> ModuleManager.PRESETS.stream().anyMatch(ModuleManager.Preset::isRunning);
-            default -> false;
-        };
+        boolean active = p.kind() == Kind.MODULE ? p.module().isRunning()
+                : p.kind() == Kind.PRESETS && ModuleManager.PRESETS.stream().anyMatch(ModuleManager.Preset::isRunning);
         if (active) Theme.pill(g, x + w - 9, y + 8, 4, 4, Theme.GOOD);
         addHit(x, y, w, ENTRY_H, () -> selectPage(p));
     }
@@ -312,12 +367,21 @@ public class ControlPanelScreen extends Screen {
         int cx = x + PAD + 2;
         int cw = w - PAD * 2 - 4;
         int top = y + PAD - (int) scroll;
-        int bottom = switch (page.kind()) {
-            case PRESETS -> drawPresetsPage(g, cx, top, cw, mx, my);
-            case MODULE -> drawModulePage(g, page.module(), cx, top, cw, mx, my);
-            case SAFETY -> drawSettingsPage(g, "safety", PanelSettings.safety(), cx, top, cw, mx, my);
-            case GENERAL -> drawSettingsPage(g, "general", PanelSettings.general(), cx, top, cw, mx, my);
-        };
+        int bottom;
+        switch (page.kind()) {
+            case PRESETS:
+                bottom = drawPresetsPage(g, cx, top, cw, mx, my);
+                break;
+            case MODULE:
+                bottom = drawModulePage(g, page.module(), cx, top, cw, mx, my);
+                break;
+            case SAFETY:
+                bottom = drawSettingsPage(g, "safety", PanelSettings.safety(), cx, top, cw, mx, my);
+                break;
+            default:
+                bottom = drawSettingsPage(g, "general", PanelSettings.general(), cx, top, cw, mx, my);
+                break;
+        }
         maxScroll = Math.max(0, bottom - top + PAD - h);
         scroll = Mth.clamp(scroll, 0, maxScroll);
         g.disableScissor();
@@ -410,7 +474,7 @@ public class ControlPanelScreen extends Screen {
                 y += 10;
             }
         }
-        List<Module> wouldStop = conflicts.stream().filter(Module::isRunning).toList();
+        List<Module> wouldStop = conflicts.stream().filter(Module::isRunning).collect(Collectors.toList());
         if (!module.isRunning() && !wouldStop.isEmpty()) {
             for (FormattedCharSequence part : font.split(Compat.translatable(T + "would_stop", Notifier.names(wouldStop)), w)) {
                 g.text(font, part, x, y, Theme.WARN);
@@ -475,7 +539,7 @@ public class ControlPanelScreen extends Screen {
             Module module = ModuleManager.ALL.get(i);
             int chipX = x + 6 + i * step;
             boolean included = preset.includes(module);
-            List<Module> replaces = included ? List.of() : preset.wouldReplace(module);
+            List<Module> replaces = included ? ImmutableList.of() : preset.wouldReplace(module);
             boolean chipHover = inside(mx, my, chipX, chipY, 17, 17);
             Theme.round(g, chipX, chipY, 17, 17, included ? Theme.withAlpha(module.color(), 0.45f) : Theme.CONTROL);
             g.item(module.icon(), chipX, chipY);
@@ -529,16 +593,17 @@ public class ControlPanelScreen extends Screen {
 
         int right = x + w;
         int cy = y + 2;
-        // instanceof rather than a pattern switch: Java 17 (Minecraft before 1.20.5) has no pattern switches.
-        if (setting instanceof Setting.Toggle t) {
+        // Plain instanceof and casts: Java 8 (Minecraft before 1.17) has no pattern matching.
+        if (setting instanceof Setting.Toggle) {
+            Setting.Toggle t = (Setting.Toggle) setting;
             drawSwitch(g, "toggle:" + t.id(), right - 26, y + 4, 26, 12, t.get().getAsBoolean(), enabled,
                     accent, mx, my, () -> t.set().accept(!t.get().getAsBoolean()));
-        } else if (setting instanceof Setting.Range r) {
-            drawSlider(g, r, right - SLIDER_W, y, enabled, accent, mx, my);
-        } else if (setting instanceof Setting.Choice<?> c) {
-            drawChoice(g, c, right - CONTROL_W, cy, enabled, mx, my);
-        } else if (setting instanceof Setting.Hotkey k) {
-            drawHotkey(g, k.key().get(), right - CONTROL_W, cy, enabled, mx, my);
+        } else if (setting instanceof Setting.Range) {
+            drawSlider(g, (Setting.Range) setting, right - SLIDER_W, y, enabled, accent, mx, my);
+        } else if (setting instanceof Setting.Choice<?>) {
+            drawChoice(g, (Setting.Choice<?>) setting, right - CONTROL_W, cy, enabled, mx, my);
+        } else if (setting instanceof Setting.Hotkey) {
+            drawHotkey(g, ((Setting.Hotkey) setting).key().get(), right - CONTROL_W, cy, enabled, mx, my);
         }
         return y + ROW_H;
     }

@@ -25,7 +25,7 @@ abstract class QuietWindowMixin {
 	private void quiettest$noFocus(CallbackInfo ci) {
 		try {
 			// GLFW isn't on the test compile classpath, so call it reflectively.
-			var hint = Class.forName("org.lwjgl.glfw.GLFW").getMethod("glfwWindowHint", int.class, int.class);
+			java.lang.reflect.Method hint = Class.forName("org.lwjgl.glfw.GLFW").getMethod("glfwWindowHint", int.class, int.class);
 			hint.invoke(null, GLFW_FOCUSED, 0);
 			hint.invoke(null, GLFW_FOCUS_ON_SHOW, 0);
 		} catch (ReflectiveOperationException ignored) {

@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.gametest;
 
+import com.google.common.collect.ImmutableList;
 import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.config.SmartConfig;
@@ -218,11 +219,11 @@ public final class SmartTests {
             check(!ModuleManager.AUTO_EAT.isRunning(), "Hold Right Click should stop Auto Eat");
             ModuleManager.stopAll(null);
 
-            check(ModuleManager.normalize(List.of("hold_use", "auto_eat", "auto_attack")).equals(List.of("hold_use")),
+            check(ModuleManager.normalize(ImmutableList.of("hold_use", "auto_eat", "auto_attack")).equals(ImmutableList.of("hold_use")),
                     "A preset can't keep modules that conflict with Hold Right Click");
-            check(ModuleManager.normalize(List.of("mob_sweep", "hold_attack", "auto_eat")).equals(List.of("mob_sweep", "auto_eat", "auto_attack")),
+            check(ModuleManager.normalize(ImmutableList.of("mob_sweep", "hold_attack", "auto_eat")).equals(ImmutableList.of("mob_sweep", "auto_eat", "auto_attack")),
                     "A preset with Mob Sweep should drop Hold Left Click and gain Auto Attack");
-            check(ModuleManager.normalize(List.of("hold_attack", "mob_sweep")).equals(List.of("hold_attack")),
+            check(ModuleManager.normalize(ImmutableList.of("hold_attack", "mob_sweep")).equals(ImmutableList.of("hold_attack")),
                     "Mob Sweep can't stay when Auto Attack can't join");
         });
         context.waitTick();

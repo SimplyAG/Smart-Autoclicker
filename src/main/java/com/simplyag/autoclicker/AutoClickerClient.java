@@ -37,7 +37,22 @@ public class AutoClickerClient implements ClientModInitializer {
     private static KeyMapping stopAllKey;
     private static final List<PresetKey> presetKeys = new ArrayList<>();
 
-    private record PresetKey(ModuleManager.Preset preset, KeyMapping key) {
+    private static final class PresetKey {
+        private final ModuleManager.Preset preset;
+        private final KeyMapping key;
+
+        PresetKey(ModuleManager.Preset preset, KeyMapping key) {
+            this.preset = preset;
+            this.key = key;
+        }
+
+        ModuleManager.Preset preset() {
+            return preset;
+        }
+
+        KeyMapping key() {
+            return key;
+        }
     }
 
     public static @Nullable KeyMapping stopAllKey() {

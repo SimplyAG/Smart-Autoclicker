@@ -63,6 +63,13 @@ public final class StatusHud {
         }
     }
 
-    private record Line(Module module, Component text) {
+    private static final class Line {
+        private final Module module;
+        private final Component text;
+
+        Line(Module module, Component text) {
+            this.module = module;
+            this.text = text;
+        }
     }
 }

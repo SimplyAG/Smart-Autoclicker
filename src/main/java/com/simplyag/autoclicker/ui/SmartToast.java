@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.ui;
 
+import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.toasts.Toast;
@@ -38,7 +39,7 @@ public class SmartToast implements Toast {
     private Component title;
     private @Nullable Component message;
     private int titleColor;
-    private List<FormattedCharSequence> lines = List.of();
+    private List<FormattedCharSequence> lines = ImmutableList.of();
     private int width = MIN_WIDTH;
     private boolean changed = true;
     private long shownSince;
@@ -74,7 +75,7 @@ public class SmartToast implements Toast {
     }
 
     private void layout(Font font) {
-        lines = message == null ? List.of() : font.split(message, MAX_TEXT_WIDTH);
+        lines = message == null ? ImmutableList.of() : font.split(message, MAX_TEXT_WIDTH);
         if (lines.size() > 2) lines = lines.subList(0, 2);
         int textWidth = font.width(title);
         for (FormattedCharSequence line : lines) {

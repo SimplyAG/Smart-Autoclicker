@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -55,7 +56,8 @@ public final class SafetyMonitor {
         }
         if (justHurt && cfg.stopWhenHitByPlayer) {
             DamageSource source = player.getLastDamageSource();
-            if (source != null && source.getEntity() instanceof Player attacker && attacker != player) {
+            Entity attacker = source == null ? null : source.getEntity();
+            if (attacker instanceof Player && attacker != player) {
                 ModuleManager.stopAll(Compat.translatable("smart-autoclicker.toast.hit_by_player", attacker.getName()));
                 return;
             }
