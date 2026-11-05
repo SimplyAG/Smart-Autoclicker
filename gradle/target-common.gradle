@@ -92,6 +92,10 @@ jar {
 tasks.matching { it.name == 'runClientGameTest' }.configureEach {
 	// The game runs on the target's Java, not whatever JDK runs Gradle.
 	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+	// On Linux CI Loom wraps the game in its own xvfb-run, building the java command line by hand. On Java 8 (no @argfiles)
+	// that command loses the classpath ("Could not find or load main class"), so Java 8 runs skip Loom's wrapper; CI
+	// already starts every 1.x test inside xvfb-run, so the game still has a display.
+	if (javaVersion < 9) useXvfb = false
 	// gametest_disable_network_synchronizer=true in a version's gradle.properties: see the comment there.
 	if (project.findProperty('gametest_disable_network_synchronizer') == 'true') {
 		systemProperty 'fabric.client.gametest.disableNetworkSynchronizer', 'true'
