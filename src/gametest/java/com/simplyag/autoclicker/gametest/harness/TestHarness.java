@@ -22,7 +22,9 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 //?}
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
@@ -157,12 +159,15 @@ public class TestHarness implements Runnable, TestClient {
         server.runCommand("gamerule doDaylightCycle false");
         server.runCommand("weather clear");
         int r = ARENA_RADIUS;
-        // /fill only works on loaded chunks: keep the whole arena loaded, then give the chunks time to load.
+        // /fill only works on loaded chunks: keep the whole arena loaded, and fill until the floor is really there
+        // (the corners are the last chunks to load). The player only goes up once it is, or they'd fall.
         server.runCommand("forceload add " + -r + " " + -r + " " + r + " " + r);
-        server.runCommand("tp @p 0.5 " + (ARENA_Y + 1) + " 0.5 0 0");
-        waitFor(mc -> mc.player.getY() > ARENA_Y, 20 * 30);
-        waitTicks(100);
-        server.runCommand("fill " + -r + " " + ARENA_Y + " " + -r + " " + r + " " + ARENA_Y + " " + r + " minecraft:smooth_stone");
+        String fill = "fill " + -r + " " + ARENA_Y + " " + -r + " " + r + " " + ARENA_Y + " " + r + " minecraft:smooth_stone";
+        for (int attempt = 0; !arenaBuilt(server, r); attempt++) {
+            if (attempt == 60) throw new AssertionError("The test arena's chunks never loaded");
+            waitTicks(20);
+            server.runCommand(fill);
+        }
         server.runCommand("kill @e[type=!player]");
         server.runCommand("tp @p 0.5 " + (ARENA_Y + 1) + " 0.5 0 0");
         //? if >=1.20 {
@@ -170,6 +175,17 @@ public class TestHarness implements Runnable, TestClient {
         //?} else
         /*waitFor(mc -> mc.player.isOnGround(), 20 * 30);*/
         waitTicks(20);
+    }
+
+    private static boolean arenaBuilt(HarnessServer server, int r) {
+        return server.computeOnServer(s -> {
+            for (int x : new int[]{-r, r}) {
+                for (int z : new int[]{-r, r}) {
+                    if (s.overworld().getBlockState(new BlockPos(x, ARENA_Y, z)).getBlock() != Blocks.SMOOTH_STONE) return false;
+                }
+            }
+            return true;
+        });
     }
 
     private static void deleteSaves(Path saves) {
