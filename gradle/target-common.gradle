@@ -109,3 +109,6 @@ tasks.matching { it.name == 'runClientGameTest' }.configureEach {
 // Test windows never take focus and never play sound (the PC is in use while tests run). Shared with the other mod
 // projects; the GLFW half is the test-only QuietWindowMixin in src/gametest.
 apply from: rootProject.file('gradle/quiet-test-client.gradle')
+
+// Pre-publish smoke test of the staged release jars (test-only).
+apply from: rootProject.file('gradle/smoke-target.gradle')
