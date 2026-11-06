@@ -76,8 +76,9 @@ jobs:
           MINECRAFT: ${{ matrix.minecraft }}
         # Fabric's test world must finish loading within one minute of game ticks. On these software-rendered runners
         # the 1.21.9+ integrated server sometimes stalls while preparing the spawn area and never gets there (the same
-        # versions load in about two seconds in other runs). Only that failure is retried, up to three attempts; any
-        # failing test fails the job straight away.
+        # versions load in about two seconds in other runs). Downloads from Mojang's servers also fail now and then
+        # (every job sets up all 44 versions, so it downloads a lot). Only those two failures are retried, up to three
+        # attempts; any failing test fails the job straight away.
         run: |
           run_tests() {
             if [[ "$MINECRAFT" == 1.* ]]; then
@@ -88,8 +89,14 @@ jobs:
           }
           for attempt in 1 2 3; do
             if run_tests 2>&1 | tee test-output.log; [[ ${PIPESTATUS[0]} -eq 0 ]]; then exit 0; fi
-            if ! grep -q 'AssertionError: Timeout loading world' test-output.log; then exit 1; fi
-            echo "::warning::Minecraft $MINECRAFT: the test world didn't load in time (attempt $attempt of 3)"
+            if grep -q 'AssertionError: Timeout loading world' test-output.log; then
+              echo "::warning::Minecraft $MINECRAFT: the test world didn't load in time (attempt $attempt of 3)"
+            elif grep -q 'loom.util.download.DownloadException' test-output.log; then
+              echo "::warning::Minecraft $MINECRAFT: a download from Mojang failed (attempt $attempt of 3)"
+              sleep 30
+            else
+              exit 1
+            fi
           done
           exit 1
       - uses: actions/upload-artifact@v7
