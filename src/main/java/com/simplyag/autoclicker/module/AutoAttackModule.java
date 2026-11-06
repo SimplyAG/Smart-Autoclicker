@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.OwnableEntity;
 //? if >=1.21.11 {
 import net.minecraft.world.entity.animal.golem.AbstractGolem;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
@@ -58,7 +57,9 @@ public class AutoAttackModule extends Module {
         // With a detached camera (Freecam), the crosshair belongs to the camera, not to where you're facing
         boolean detached = cameraDetached(mc);
         HitResult target = detached ? pickFromPlayer(mc, player) : mc.hitResult;
-        if (!(target instanceof EntityHitResult hit) || !shouldAttack(player, hit.getEntity())) return;
+        if (!(target instanceof EntityHitResult)) return;
+        EntityHitResult hit = (EntityHitResult) target;
+        if (!shouldAttack(player, hit.getEntity())) return;
         if (toolTooWorn(player)) return;
 
         SmartConfig cfg = SmartConfig.get();
@@ -84,8 +85,8 @@ public class AutoAttackModule extends Module {
     /** What the player itself is looking at: the nearest entity within reach that no block is in front of. */
     private static @Nullable EntityHitResult pickFromPlayer(Minecraft mc, LocalPlayer player) {
         double range = Compat.entityReach(player);
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = Compat.viewVector(player.getXRot(), player.getYRot());
+        Vec3 eye = Compat.eyePosition(player);
+        Vec3 look = Compat.viewVector(Compat.xRot(player), Compat.yRot(player));
         Vec3 end = eye.add(look.scale(range));
         HitResult block = mc.level.clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
         double maxSqr = block.getType() == HitResult.Type.MISS ? range * range : block.getLocation().distanceToSqr(eye);
@@ -94,13 +95,13 @@ public class AutoAttackModule extends Module {
     }
 
     public static boolean shouldAttack(LocalPlayer self, Entity target) {
-        if (!(target instanceof LivingEntity living) || !living.isAlive() || target == self) return false;
+        if (!(target instanceof LivingEntity) || !target.isAlive() || target == self) return false;
         SmartConfig cfg = SmartConfig.get();
         if (target instanceof Player) return cfg.attackPlayers;
         if (target instanceof ArmorStand) return cfg.attackArmorStands;
         if (cfg.protectNamedAndTamed) {
             if (target.hasCustomName()) return false;
-            if (target instanceof OwnableEntity ownable && Compat.hasOwner(ownable)) return false;
+            if (Compat.isOwnedPet(target)) return false;
             if (target instanceof AbstractVillager || target instanceof AbstractGolem) return false;
         }
         return target instanceof Enemy ? cfg.attackHostiles : cfg.attackPassives;
@@ -117,7 +118,7 @@ public class AutoAttackModule extends Module {
         }
         if (!toolWarned) {
             toolWarned = true;
-            stopWithReason(Component.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
         }
         return true;
     }
@@ -125,6 +126,6 @@ public class AutoAttackModule extends Module {
     @Override
     public @Nullable Component status() {
         Session session = ModuleManager.session();
-        return session == null ? null : Component.translatable("smart-autoclicker.status.hits", session.attacks);
+        return session == null ? null : Compat.translatable("smart-autoclicker.status.hits", session.attacks);
     }
 }

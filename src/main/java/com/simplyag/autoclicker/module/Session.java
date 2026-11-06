@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.module;
 
+import com.simplyag.autoclicker.util.Compat;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 
@@ -41,6 +42,6 @@ public final class Session {
         if (levels > 0) sb.append(" · +").append(levels).append(levels == 1 ? " level" : " levels");
         if (foodsEaten > 0) sb.append(" · ").append(foodsEaten).append(" eaten");
         if (rocketsFired > 0) sb.append(" · ").append(rocketsFired).append(rocketsFired == 1 ? " rocket" : " rockets");
-        return Component.literal(sb.toString());
+        return Compat.literal(sb.toString());
     }
 }

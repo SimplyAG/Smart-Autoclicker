@@ -31,10 +31,10 @@ At <https://authors.curseforge.com> → **Create Project**:
 | Field | Value |
 |---|---|
 | Release type | **Beta** for the first release, then Release once it has had real-world use |
-| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.3.0: `mc1.20-1.20.1` → 1.20, 1.20.1; `mc1.20.2` → 1.20.2; `mc1.20.3-1.20.4` → 1.20.3, 1.20.4; `mc1.20.5-1.20.6` → 1.20.5, 1.20.6; `mc1.21-1.21.1` → 1.21, 1.21.1; `mc1.21.2-1.21.4` → 1.21.2, 1.21.3, 1.21.4; `mc1.21.5` → 1.21.5; `mc1.21.6-1.21.8` → 1.21.6, 1.21.7, 1.21.8; `mc1.21.9-1.21.10` → 1.21.9, 1.21.10; `mc1.21.11` → 1.21.11; `mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
+| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.4.0: `mc1.14.4` → 1.14.4; `mc1.15-1.15.2` → 1.15, 1.15.1, 1.15.2; `mc1.16-1.16.1` → 1.16, 1.16.1; `mc1.16.2-1.16.5` → 1.16.2, 1.16.3, 1.16.4, 1.16.5; `mc1.17-1.18.2` → 1.17, 1.17.1, 1.18, 1.18.1, 1.18.2; `mc1.19-1.19.2` → 1.19, 1.19.1, 1.19.2; `mc1.19.3` → 1.19.3; `mc1.19.4` → 1.19.4; `mc1.20-1.20.1` → 1.20, 1.20.1; `mc1.20.2` → 1.20.2; `mc1.20.3-1.20.4` → 1.20.3, 1.20.4; `mc1.20.5-1.20.6` → 1.20.5, 1.20.6; `mc1.21-1.21.1` → 1.21, 1.21.1; `mc1.21.2-1.21.4` → 1.21.2, 1.21.3, 1.21.4; `mc1.21.5` → 1.21.5; `mc1.21.6-1.21.8` → 1.21.6, 1.21.7, 1.21.8; `mc1.21.9-1.21.10` → 1.21.9, 1.21.10; `mc1.21.11` → 1.21.11; `mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
 | Mod loader | Fabric |
 | Environment | Client |
-| Java | 17 for the 1.20 – 1.20.4 jars, 21 for the 1.20.5 – 1.21.11 jars, 25 for the 26.x jars |
+| Java | 8 for the 1.14.4 – 1.16.5 jars, 16 for the 1.17 – 1.18.2 jar, 17 for the 1.19 – 1.20.4 jars, 21 for the 1.20.5 – 1.21.11 jars, 25 for the 26.x jars |
 | Related projects | **Fabric API**: Required dependency. **Mod Menu**: Optional dependency |
 | Changelog | Paste from the section below |
 
@@ -84,13 +84,21 @@ Using the Freecam mod? Auto Attack and Mob Sweep keep working from where your ch
 **K** opens the control panel (or use Mod Menu). **Z** stops everything. **H** toggles Auto Walk. Every module and preset can have its own key in *Controls → Key Binds*.
 
 ### Requirements
-Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu.
+Minecraft 1.14.4 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu (1.16.2 and newer).
 
 ### Which file do I download?
 The CurseForge app, Modrinth app and Prism pick the right file for you. Downloading by hand? Open **Files**, filter by your Minecraft version, or use this table. The Minecraft versions are also in each file name (`smart-autoclicker-mc1.21.6-1.21.8-…jar`).
 
 | Your Minecraft | File name starts with |
 |---|---|
+| 1.14.4 | `smart-autoclicker-mc1.14.4` |
+| 1.15, 1.15.1, 1.15.2 | `smart-autoclicker-mc1.15-1.15.2` |
+| 1.16, 1.16.1 | `smart-autoclicker-mc1.16-1.16.1` |
+| 1.16.2, 1.16.3, 1.16.4, 1.16.5 | `smart-autoclicker-mc1.16.2-1.16.5` |
+| 1.17, 1.17.1, 1.18, 1.18.1, 1.18.2 | `smart-autoclicker-mc1.17-1.18.2` |
+| 1.19, 1.19.1, 1.19.2 | `smart-autoclicker-mc1.19-1.19.2` |
+| 1.19.3 | `smart-autoclicker-mc1.19.3` |
+| 1.19.4 | `smart-autoclicker-mc1.19.4` |
 | 1.20, 1.20.1 | `smart-autoclicker-mc1.20-1.20.1` |
 | 1.20.2 | `smart-autoclicker-mc1.20.2` |
 | 1.20.3, 1.20.4 | `smart-autoclicker-mc1.20.3-1.20.4` |
@@ -110,6 +118,16 @@ Got the wrong one? Nothing breaks: Fabric shows which Minecraft version the file
 ⚠ **Only use this on servers that allow auto clickers and AFK automation.** It's client-side only.
 
 ---
+
+## Changelog for 1.4.0
+
+Now for every Minecraft version from 1.14.4 on: 1.14.4, 1.15 – 1.15.2, 1.16 – 1.16.5, 1.17 – 1.17.1, 1.18 – 1.18.2 and 1.19 – 1.19.4, with every feature.
+
+- Eight more files cover the twenty versions (pick the one whose name includes your version)
+- Works with every Fabric API release for your Minecraft version, including older ones
+- On 1.14 and 1.15, toasts use the game's standard toast size, so long messages are shortened
+- On 1.14 and 1.15 the Sweep Grinder preset shows a golden sword (netherite doesn't exist yet)
+- Mod Menu integration from 1.16.2 (older versions have no compatible Mod Menu)
 
 ## Changelog for 1.3.0
 

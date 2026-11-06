@@ -34,7 +34,7 @@ public class MobSweepModule extends Module {
         SmartConfig cfg = SmartConfig.get();
         ticks++;
         float periodTicks = cfg.sweepPeriodTenths * 2f; // tenths of a second -> ticks
-        float offset = (cfg.sweepWidthDeg / 2f) * Mth.sin(ticks * Mth.TWO_PI / periodTicks);
+        float offset = (cfg.sweepWidthDeg / 2f) * Mth.sin(ticks * ((float) (Math.PI * 2)) / periodTicks);
         turn(player, offset - lastOffset);
         lastOffset = offset;
     }
@@ -48,12 +48,12 @@ public class MobSweepModule extends Module {
 
     /** Rotates without a visual snap: the renderer interpolates from the old yaw to the new one. */
     private static void turn(LocalPlayer player, float degrees) {
-        player.yRotO = player.getYRot();
-        player.setYRot(player.getYRot() + degrees);
+        player.yRotO = Compat.yRot(player);
+        Compat.setYRot(player, Compat.yRot(player) + degrees);
     }
 
     @Override
     public @Nullable Component status() {
-        return Component.translatable("smart-autoclicker.status.sweep", SmartConfig.get().sweepWidthDeg);
+        return Compat.translatable("smart-autoclicker.status.sweep", SmartConfig.get().sweepWidthDeg);
     }
 }

@@ -34,13 +34,25 @@ dependencies {
 	// Optional: Mod Menu adds a config button. Not required at runtime.
 	// Not transitive: some Mod Menu releases list a dependency (Placeholder API) that isn't on any public maven, and
 	// Mod Menu bundles what it needs to run.
-	modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
-	modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+	// modmenu_version=NONE: no Mod Menu build for that Minecraft version (the integration is left out there).
+	if (project.modmenu_version != "NONE") {
+		modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+		// modmenu_runtime=false: compile against it, but leave it out of the test game (its Fabric API needs differ).
+		if (project.findProperty("modmenu_runtime") != "false") {
+			modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+		}
+	} else {
+		sourceSets.main.java.exclude "**/integration/ModMenuIntegration.java"
+	}
 
 	// 26.x ships JSpecify with the game; older Minecraft doesn't, and the mod's @Nullable annotations need it to
 	// compile. Annotations only: nothing from it is needed at runtime.
 	compileOnly "org.jspecify:jspecify:1.0.0"
 }
+
+// Fabric API's mod id: "fabric" before 26.1. Releases up to 1.19.1 only have that id, and later 1.x releases (id
+// "fabric-api") still provide it, so depending on "fabric" works with every Fabric API a player may have.
+ext.sacFabricApiId = 'fabric'
 
 // Resources, Java level, jar contents and the in-game tests: shared with build.gradle.
 apply from: rootProject.file('gradle/target-common.gradle')

@@ -31,17 +31,17 @@ public final class StatusHud {
 
         List<Line> lines = new ArrayList<>();
         Session session = ModuleManager.session();
-        Component header = Component.translatable("smart-autoclicker.hud.title",
+        Component header = Compat.translatable("smart-autoclicker.hud.title",
                 session == null ? "0s" : Session.formatDuration(session.elapsedMillis()));
         for (Module module : ModuleManager.ALL) {
             if (!module.isRunning()) continue;
             Component status = module.status();
             lines.add(new Line(module, status == null ? module.name()
-                    : Component.empty().append(module.name()).append(Compat.withColor(Component.literal("  ").append(status), Theme.TEXT_DIM))));
+                    : Compat.empty().append(module.name()).append(Compat.withColor(Compat.literal("  ").append(status), Theme.TEXT_DIM))));
         }
 
-        int width = 8 + font.width(header);
-        for (Line line : lines) width = Math.max(width, 10 + font.width(line.text));
+        int width = 8 + Gfx.width(font, header);
+        for (Line line : lines) width = Math.max(width, 10 + Gfx.width(font, line.text));
         int panelW = width + PADDING * 2;
         int panelH = PADDING * 2 + LINE_HEIGHT * (lines.size() + 1);
 
@@ -63,6 +63,13 @@ public final class StatusHud {
         }
     }
 
-    private record Line(Module module, Component text) {
+    private static final class Line {
+        private final Module module;
+        private final Component text;
+
+        Line(Module module, Component text) {
+            this.module = module;
+            this.text = text;
+        }
     }
 }

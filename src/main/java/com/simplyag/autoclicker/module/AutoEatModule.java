@@ -82,16 +82,18 @@ public class AutoEatModule extends Module {
         }
 
         switch (state) {
-            case IDLE -> {
+            case IDLE:
                 if (waitTicks > 0) {
                     waitTicks--;
                 } else if (needsFood(player)) {
                     beginEating(mc, player);
                 }
-            }
-            case SWITCHED -> state = State.START;
-            case START -> {
-                mc.gameMode.useItem(player, hand);
+                break;
+            case SWITCHED:
+                state = State.START;
+                break;
+            case START:
+                Compat.useItem(mc, player, hand);
                 if (player.isUsingItem()) {
                     Input.hold(mc.options.keyUse);
                     state = State.EATING;
@@ -101,17 +103,17 @@ public class AutoEatModule extends Module {
                     reset();
                     waitTicks = 100;
                 }
-            }
-            case EATING -> {
+                break;
+            case EATING:
                 if (player.isUsingItem() && ++eatTicks < MAX_EAT_TICKS) {
                     Input.hold(mc.options.keyUse);
                 } else {
                     finishEating(mc, player);
                 }
-            }
-            case COOLDOWN -> {
+                break;
+            case COOLDOWN:
                 if (--waitTicks <= 0) state = State.IDLE;
-            }
+                break;
         }
     }
 
@@ -146,13 +148,13 @@ public class AutoEatModule extends Module {
 
         foodFound(player);
         hand = InteractionHand.MAIN_HAND;
-        int selected = Compat.selectedSlot(player.getInventory());
+        int selected = Compat.selectedSlot(Compat.inventory(player));
         if (slot == selected) {
             previousSlot = -1;
             state = State.START;
         } else {
             previousSlot = selected;
-            Compat.selectSlot(player.getInventory(), slot);
+            Compat.selectSlot(Compat.inventory(player), slot);
             state = State.SWITCHED; // give the slot change a tick to reach the server
         }
     }
@@ -169,7 +171,7 @@ public class AutoEatModule extends Module {
 
     private void restoreSlot(@Nullable LocalPlayer player) {
         if (player != null && previousSlot >= 0) {
-            Compat.selectSlot(player.getInventory(), previousSlot);
+            Compat.selectSlot(Compat.inventory(player), previousSlot);
         }
         previousSlot = -1;
     }
@@ -181,22 +183,22 @@ public class AutoEatModule extends Module {
             warnedLowFood = false;
         } else if (!warnedLowFood) {
             warnedLowFood = true;
-            Notifier.alert(icon(), Component.translatable("smart-autoclicker.toast.low_food"),
-                    Component.translatable("smart-autoclicker.toast.low_food.desc", left), false);
+            Notifier.alert(icon(), Compat.translatable("smart-autoclicker.toast.low_food"),
+                    Compat.translatable("smart-autoclicker.toast.low_food.desc", left), false);
         }
     }
 
     private void outOfFood() {
         if (!warnedOutOfFood) {
             warnedOutOfFood = true;
-            Notifier.alert(icon(), Component.translatable("smart-autoclicker.toast.out_of_food"),
-                    Component.translatable("smart-autoclicker.toast.out_of_food.desc"), true);
+            Notifier.alert(icon(), Compat.translatable("smart-autoclicker.toast.out_of_food"),
+                    Compat.translatable("smart-autoclicker.toast.out_of_food.desc"), true);
         }
     }
 
     @Override
     public @Nullable Component status() {
-        if (isBusy()) return Component.translatable("smart-autoclicker.status.eating");
-        return Component.translatable("smart-autoclicker.status.food_left", foodLeft);
+        if (isBusy()) return Compat.translatable("smart-autoclicker.status.eating");
+        return Compat.translatable("smart-autoclicker.status.food_left", foodLeft);
     }
 }

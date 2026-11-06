@@ -1,5 +1,6 @@
 package com.simplyag.autoclicker.config;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.simplyag.autoclicker.AutoClickerClient;
@@ -108,10 +109,10 @@ public final class SmartConfig {
 
     public static Map<String, List<String>> defaultPresets() {
         Map<String, List<String>> map = new LinkedHashMap<>();
-        map.put("mob_grinder", new ArrayList<>(List.of("auto_attack", "auto_eat")));
-        map.put("sweep_grinder", new ArrayList<>(List.of("auto_attack", "auto_eat", "mob_sweep")));
-        map.put("afk_miner", new ArrayList<>(List.of("hold_attack", "auto_eat")));
-        map.put("elytra_trip", new ArrayList<>(List.of("elytra_cruise", "auto_eat")));
+        map.put("mob_grinder", new ArrayList<>(ImmutableList.of("auto_attack", "auto_eat")));
+        map.put("sweep_grinder", new ArrayList<>(ImmutableList.of("auto_attack", "auto_eat", "mob_sweep")));
+        map.put("afk_miner", new ArrayList<>(ImmutableList.of("hold_attack", "auto_eat")));
+        map.put("elytra_trip", new ArrayList<>(ImmutableList.of("elytra_cruise", "auto_eat")));
         return map;
     }
 

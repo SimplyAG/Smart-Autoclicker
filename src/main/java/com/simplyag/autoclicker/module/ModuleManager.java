@@ -1,5 +1,10 @@
 package com.simplyag.autoclicker.module;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import java.util.stream.Collectors;
+import com.simplyag.autoclicker.util.Compat;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.util.Notifier;
 import net.minecraft.client.Minecraft;
@@ -24,7 +29,7 @@ public final class ModuleManager {
     public static final MobSweepModule MOB_SWEEP = new MobSweepModule();
     public static final ElytraCruiseModule ELYTRA_CRUISE = new ElytraCruiseModule();
 
-    public static final List<Module> ALL = List.of(
+    public static final List<Module> ALL = ImmutableList.of(
             AUTO_ATTACK, AUTO_EAT, HOLD_ATTACK, HOLD_USE, AUTO_WALK, MOB_SWEEP, ELYTRA_CRUISE);
 
     /**
@@ -34,25 +39,26 @@ public final class ModuleManager {
      * Walk in zigzags; and while flying, Elytra Cruise needs the mouse and your heading to itself.
      * Auto Eat pauses the others while it eats, so it goes with everything except Hold Right.
      */
-    private static final Map<Module, Set<Module>> CONFLICTS = Map.of(
-            AUTO_ATTACK, Set.of(HOLD_ATTACK, HOLD_USE, ELYTRA_CRUISE),
-            AUTO_EAT, Set.of(HOLD_USE),
-            HOLD_ATTACK, Set.of(AUTO_ATTACK, HOLD_USE, MOB_SWEEP, ELYTRA_CRUISE),
-            HOLD_USE, Set.of(AUTO_ATTACK, AUTO_EAT, HOLD_ATTACK, MOB_SWEEP, ELYTRA_CRUISE),
-            AUTO_WALK, Set.of(MOB_SWEEP, ELYTRA_CRUISE),
-            MOB_SWEEP, Set.of(HOLD_ATTACK, HOLD_USE, AUTO_WALK, ELYTRA_CRUISE),
-            ELYTRA_CRUISE, Set.of(AUTO_ATTACK, HOLD_ATTACK, HOLD_USE, AUTO_WALK, MOB_SWEEP));
+    private static final Map<Module, Set<Module>> CONFLICTS = ImmutableMap.<Module, Set<Module>>builder()
+            .put(AUTO_ATTACK, ImmutableSet.of(HOLD_ATTACK, HOLD_USE, ELYTRA_CRUISE))
+            .put(AUTO_EAT, ImmutableSet.of(HOLD_USE))
+            .put(HOLD_ATTACK, ImmutableSet.of(AUTO_ATTACK, HOLD_USE, MOB_SWEEP, ELYTRA_CRUISE))
+            .put(HOLD_USE, ImmutableSet.of(AUTO_ATTACK, AUTO_EAT, HOLD_ATTACK, MOB_SWEEP, ELYTRA_CRUISE))
+            .put(AUTO_WALK, ImmutableSet.of(MOB_SWEEP, ELYTRA_CRUISE))
+            .put(MOB_SWEEP, ImmutableSet.of(HOLD_ATTACK, HOLD_USE, AUTO_WALK, ELYTRA_CRUISE))
+            .put(ELYTRA_CRUISE, ImmutableSet.of(AUTO_ATTACK, HOLD_ATTACK, HOLD_USE, AUTO_WALK, MOB_SWEEP))
+            .build();
 
     /** Mob Sweep only exists to widen Auto Attack, so it brings Auto Attack along. */
-    private static final Map<Module, Module> REQUIRES = Map.of(MOB_SWEEP, AUTO_ATTACK);
+    private static final Map<Module, Module> REQUIRES = ImmutableMap.of(MOB_SWEEP, AUTO_ATTACK);
 
     public static boolean conflicts(Module a, Module b) {
-        return CONFLICTS.getOrDefault(a, Set.of()).contains(b);
+        return CONFLICTS.getOrDefault(a, ImmutableSet.of()).contains(b);
     }
 
     /** Modules that can't run alongside this one, in sidebar order. */
     public static List<Module> conflictsOf(Module module) {
-        return ALL.stream().filter(m -> conflicts(module, m)).toList();
+        return ALL.stream().filter(m -> conflicts(module, m)).collect(Collectors.toList());
     }
 
     public static @Nullable Module requirementOf(Module module) {
@@ -61,7 +67,7 @@ public final class ModuleManager {
 
     /** Modules that need this one to run (Mob Sweep for Auto Attack). */
     public static List<Module> dependentsOf(Module module) {
-        return ALL.stream().filter(m -> REQUIRES.get(m) == module).toList();
+        return ALL.stream().filter(m -> REQUIRES.get(m) == module).collect(Collectors.toList());
     }
 
     public static @Nullable Module byId(String id) {
@@ -79,7 +85,7 @@ public final class ModuleManager {
             if (module == null || kept.contains(module)) continue;
             if (kept.stream().noneMatch(k -> conflicts(module, k))) kept.add(module);
         }
-        for (Module module : List.copyOf(kept)) {
+        for (Module module : ImmutableList.copyOf(kept)) {
             Module required = REQUIRES.get(module);
             if (required == null || kept.contains(required)) continue;
             if (kept.stream().noneMatch(k -> conflicts(required, k))) {
@@ -88,7 +94,7 @@ public final class ModuleManager {
                 kept.remove(module);
             }
         }
-        return new ArrayList<>(kept.stream().map(Module::id).toList());
+        return new ArrayList<>(kept.stream().map(Module::id).collect(Collectors.toList()));
     }
 
     /**
@@ -118,22 +124,49 @@ public final class ModuleManager {
     }
 
     /** A named combination of modules. Which modules it includes is stored in the config and editable. */
-    public record Preset(String id, Item icon) {
+    /** A named set of modules started together. Equal by id. */
+    public static final class Preset {
+        private final String id;
+        private final Item icon;
+
+        public Preset(String id, Item icon) {
+            this.id = id;
+            this.icon = icon;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public Item icon() {
+            return icon;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Preset && ((Preset) o).id.equals(id);
+        }
+
+        @Override
+        public int hashCode() {
+            return id.hashCode();
+        }
+
         public Component name() {
-            return Component.translatable("smart-autoclicker.preset." + id);
+            return Compat.translatable("smart-autoclicker.preset." + id);
         }
 
         public Component description() {
-            return Component.translatable("smart-autoclicker.preset." + id + ".desc");
+            return Compat.translatable("smart-autoclicker.preset." + id + ".desc");
         }
 
         public List<Module> modules() {
-            List<String> ids = SmartConfig.get().presets.getOrDefault(id, List.of());
-            return ALL.stream().filter(m -> ids.contains(m.id())).toList();
+            List<String> ids = SmartConfig.get().presets.getOrDefault(id, ImmutableList.of());
+            return ALL.stream().filter(m -> ids.contains(m.id())).collect(Collectors.toList());
         }
 
         public boolean includes(Module module) {
-            return SmartConfig.get().presets.getOrDefault(id, List.of()).contains(module.id());
+            return SmartConfig.get().presets.getOrDefault(id, ImmutableList.of()).contains(module.id());
         }
 
         /**
@@ -160,7 +193,7 @@ public final class ModuleManager {
         public List<Module> wouldReplace(Module module) {
             Module required = REQUIRES.get(module);
             return modules().stream().filter(m -> m != module && (conflicts(module, m)
-                    || required != null && !includes(required) && conflicts(required, m))).toList();
+                    || required != null && !includes(required) && conflicts(required, m))).collect(Collectors.toList());
         }
 
         public boolean isRunning() {
@@ -169,9 +202,12 @@ public final class ModuleManager {
         }
     }
 
-    public static final List<Preset> PRESETS = List.of(
+    public static final List<Preset> PRESETS = ImmutableList.of(
             new Preset("mob_grinder", Items.DIAMOND_SWORD),
+            //? if >=1.16 {
             new Preset("sweep_grinder", Items.NETHERITE_SWORD),
+            //?} else
+            /*new Preset("sweep_grinder", Items.GOLDEN_SWORD),*/
             new Preset("afk_miner", Items.DIAMOND_PICKAXE),
             new Preset("elytra_trip", Items.ELYTRA));
 
@@ -219,7 +255,7 @@ public final class ModuleManager {
         for (Module module : preset.modules()) {
             module.start(false);
         }
-        Notifier.info(new ItemStack(preset.icon()), Component.translatable("smart-autoclicker.toast.preset"), preset.name());
+        Notifier.info(new ItemStack(preset.icon()), Compat.translatable("smart-autoclicker.toast.preset"), preset.name());
     }
 
     /**
@@ -245,7 +281,7 @@ public final class ModuleManager {
     /** User pressed Stop All: a calm summary instead of an alarm. */
     public static void stopAllByUser() {
         if (!anyRunning()) {
-            Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.nothing_running"), null);
+            Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.nothing_running"), null);
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -256,7 +292,7 @@ public final class ModuleManager {
         }
         stoppingAll = false;
         session = null;
-        Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.stopped_all"), summary);
+        Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.stopped_all"), summary);
     }
 
     static void beforeModuleStart() {
@@ -270,7 +306,7 @@ public final class ModuleManager {
         if (!stoppingAll && !anyRunning()) {
             Minecraft mc = Minecraft.getInstance();
             if (session != null && mc.player != null && session.elapsedMillis() > 60_000) {
-                Notifier.info(new ItemStack(Items.CLOCK), Component.translatable("smart-autoclicker.toast.session_over"), session.summary(mc.player));
+                Notifier.info(new ItemStack(Items.CLOCK), Compat.translatable("smart-autoclicker.toast.session_over"), session.summary(mc.player));
             }
             session = null;
         }

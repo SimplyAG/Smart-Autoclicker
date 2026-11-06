@@ -3,16 +3,38 @@ package com.simplyag.autoclicker.util;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.ui.Gfx;
+//? if <1.15
+/*import com.simplyag.autoclicker.mixin.LegacyKeyMappingAccessor;*/
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+//? if >=1.16
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 //? if >=1.20.5
 import net.minecraft.core.component.DataComponents;
+//? if <1.19 {
+/*import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+*///?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+//? if >=1.17 {
 import net.minecraft.world.entity.OwnableEntity;
+//?} else {
+/*import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+*///?}
+//? if >=1.16 <1.17
+/*import net.minecraft.network.chat.TextColor;*/
+//? if <1.16
+/*import net.minecraft.ChatFormatting;*/
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
@@ -35,8 +57,12 @@ import net.minecraft.world.inventory.ClickType;
 *///?}
 //? if >=1.21.6 {
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-//?} else
-/*import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;*/
+//?} else if >=1.15 {
+/*import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+*///?} else {
+/*import java.util.ArrayList;
+import java.util.List;
+*///?}
 
 /**
  * Every Minecraft API that differs between the supported versions, in one place. The rest of the mod calls these
@@ -75,12 +101,175 @@ public final class Compat {
         /*inventory.selected = slot;*/
     }
 
-    /** Whether a pet or other ownable mob belongs to someone. */
-    public static boolean hasOwner(OwnableEntity entity) {
+    /** Whether a mob is someone's pet (a tamed wolf, cat, parrot, horse...). */
+    public static boolean isOwnedPet(Entity entity) {
         //? if >=1.21.5 {
-        return entity.getOwnerReference() != null;
+        return entity instanceof OwnableEntity && ((OwnableEntity) entity).getOwnerReference() != null;
+        //?} else if >=1.17 {
+        /*return entity instanceof OwnableEntity && ((OwnableEntity) entity).getOwnerUUID() != null;
+        *///?} else {
+        /*return entity instanceof TamableAnimal && ((TamableAnimal) entity).getOwnerUUID() != null
+                || entity instanceof AbstractHorse && ((AbstractHorse) entity).getOwnerUUID() != null;
+        *///?}
+    }
+
+    // Keyboard keys the mod binds or checks. InputConstants has them from 1.17 (SDL codes from 26.3); before, the
+    // same GLFW key codes.
+    //? if >=1.17 {
+    public static final int KEY_K = InputConstants.KEY_K;
+    public static final int KEY_Z = InputConstants.KEY_Z;
+    public static final int KEY_H = InputConstants.KEY_H;
+    public static final int KEY_ESCAPE = InputConstants.KEY_ESCAPE;
+    public static final int KEY_UP = InputConstants.KEY_UP;
+    public static final int KEY_DOWN = InputConstants.KEY_DOWN;
+    //?} else {
+    /*public static final int KEY_K = 75;
+    public static final int KEY_Z = 90;
+    public static final int KEY_H = 72;
+    public static final int KEY_ESCAPE = 256;
+    public static final int KEY_UP = 265;
+    public static final int KEY_DOWN = 264;
+    *///?}
+
+    // Rotation, inventory and abilities became getters in 1.17; before they were public fields.
+    public static float xRot(Entity entity) {
+        //? if >=1.17 {
+        return entity.getXRot();
         //?} else
-        /*return entity.getOwnerUUID() != null;*/
+        /*return entity.xRot;*/
+    }
+
+    public static float yRot(Entity entity) {
+        //? if >=1.17 {
+        return entity.getYRot();
+        //?} else
+        /*return entity.yRot;*/
+    }
+
+    public static void setXRot(Entity entity, float xRot) {
+        //? if >=1.17 {
+        entity.setXRot(xRot);
+        //?} else
+        /*entity.xRot = xRot;*/
+    }
+
+    public static void setYRot(Entity entity, float yRot) {
+        //? if >=1.17 {
+        entity.setYRot(yRot);
+        //?} else
+        /*entity.yRot = yRot;*/
+    }
+
+    public static Inventory inventory(Player player) {
+        //? if >=1.17 {
+        return player.getInventory();
+        //?} else
+        /*return player.inventory;*/
+    }
+
+    /** Where the entity's eyes are this tick. */
+    public static Vec3 eyePosition(Entity entity) {
+        //? if >=1.17 {
+        return entity.getEyePosition();
+        //?} else
+        /*return entity.getEyePosition(1.0F);*/
+    }
+
+    private static boolean instabuild(Player player) {
+        //? if >=1.17 {
+        return player.getAbilities().instabuild;
+        //?} else
+        /*return player.abilities.instabuild;*/
+    }
+
+    /** Translated text. Component.translatable/literal/empty exist from 1.19; before it they were classes. */
+    // Before 1.16 there is no MutableComponent: Component itself is mutable, so the same helpers return Component.
+    //? if >=1.16 {
+    public static MutableComponent translatable(String key, Object... args) {
+    //?} else
+    /*public static Component translatable(String key, Object... args) {*/
+        //? if >=1.19 {
+        return Component.translatable(key, args);
+        //?} else
+        /*return new TranslatableComponent(key, args);*/
+    }
+
+    //? if >=1.16 {
+    public static MutableComponent literal(String text) {
+    //?} else
+    /*public static Component literal(String text) {*/
+        //? if >=1.19 {
+        return Component.literal(text);
+        //?} else
+        /*return new TextComponent(text);*/
+    }
+
+    //? if >=1.16 {
+    public static MutableComponent empty() {
+    //?} else
+    /*public static Component empty() {*/
+        //? if >=1.19 {
+        return Component.empty();
+        //?} else
+        /*return new TextComponent("");*/
+    }
+
+    /** Text followed by more text, as a new component (the original isn't changed from 1.16 on). */
+    public static Component append(Component text, Component more) {
+        //? if >=1.16 {
+        return text.copy().append(more);
+        //?} else
+        /*return text.append(more);*/
+    }
+
+    /** Presses or releases a key mapping (KeyMapping.setDown exists from 1.15; before, through an accessor). */
+    public static void setDown(KeyMapping key, boolean down) {
+        //? if >=1.15 {
+        key.setDown(down);
+        //?} else
+        /*((LegacyKeyMappingAccessor) key).smart$setIsDown(down);*/
+    }
+
+    /** The Sneak key (keyShift from 1.15, keySneak before). */
+    public static KeyMapping sneakKey(Options options) {
+        //? if >=1.15 {
+        return options.keyShift;
+        //?} else
+        /*return options.keySneak;*/
+    }
+
+    /** The name of the key a mapping is bound to, e.g. "Z". */
+    public static Component keyName(KeyMapping key) {
+        //? if >=1.16 {
+        return key.getTranslatedKeyMessage();
+        //?} else
+        /*return literal(key.getTranslatedKeyMessage());*/
+    }
+
+    /** Uses the item in a hand, as a right click does. */
+    public static void useItem(Minecraft mc, LocalPlayer player, InteractionHand hand) {
+        //? if >=1.19 {
+        mc.gameMode.useItem(player, hand);
+        //?} else
+        /*mc.gameMode.useItem(player, mc.level, hand);*/
+    }
+
+    /** Whether the player set Sneak to toggle instead of hold. */
+    public static boolean toggleCrouch(Options options) {
+        //? if >=1.19 {
+        return options.toggleCrouch().get();
+        //?} else if >=1.15 {
+        /*return options.toggleCrouch;
+        *///?} else
+        /*return false; // Toggle Sneak arrived in 1.15*/
+    }
+
+    /** The low and high note-block sounds the alerts use. */
+    public static SoundEvent alertSound(boolean bad) {
+        //? if >=1.19.3 {
+        return bad ? SoundEvents.NOTE_BLOCK_BASS.value() : SoundEvents.NOTE_BLOCK_CHIME.value();
+        //?} else
+        /*return bad ? SoundEvents.NOTE_BLOCK_BASS : SoundEvents.NOTE_BLOCK_CHIME;*/
     }
 
     /** How far away the player can hit an entity. */
@@ -88,7 +277,7 @@ public final class Compat {
         //? if >=1.20.5 {
         return player.entityInteractionRange();
         //?} else
-        /*return player.getAbilities().instabuild ? 6.0 : 3.0;*/
+        /*return instabuild(player) ? 6.0 : 3.0;*/
     }
 
     /** Creative mode: no hunger, no item use-up. */
@@ -96,15 +285,22 @@ public final class Compat {
         //? if >=1.20.5 {
         return player.hasInfiniteMaterials();
         //?} else
-        /*return player.getAbilities().instabuild;*/
+        /*return instabuild(player);*/
     }
 
     /** Colours a text component with an ARGB/RGB colour. */
+    //? if >=1.16 {
     public static MutableComponent withColor(MutableComponent text, int color) {
+    //?} else
+    /*public static Component withColor(Component text, int color) {*/
         //? if >=1.20.3 {
         return text.withColor(color);
-        //?} else
-        /*return text.withStyle(style -> style.withColor(color & 0xFFFFFF));*/
+        //?} else if >=1.17 {
+        /*return text.withStyle(style -> style.withColor(color & 0xFFFFFF));
+        *///?} else if >=1.16 {
+        /*return text.withStyle(style -> style.withColor(TextColor.fromRgb(color & 0xFFFFFF)));
+        *///?} else
+        /*return text.withStyle(ChatFormatting.GRAY);*/
     }
 
     /** A food item's properties, or null if it isn't food. */
@@ -136,7 +332,7 @@ public final class Compat {
         //? if >=1.21.2 {
         return stack.has(DataComponents.GLIDER);
         //?} else
-        /*return stack.is(Items.ELYTRA);*/
+        /*return stack.getItem() == Items.ELYTRA;*/
     }
 
     public static @Nullable Screen screen(Minecraft mc) {
@@ -178,12 +374,27 @@ public final class Compat {
         /*return KeyBindingHelper.getBoundKeyOf(key);*/
     }
 
+    //? if <1.15 {
+    /*private static final List<Consumer<Gfx>> HUDS = new ArrayList<>();
+
+    /^* Draws the registered HUD elements; called by GuiMixin after the vanilla HUD (1.14 only). ^/
+    public static void drawHuds() {
+        for (Consumer<Gfx> hud : HUDS) hud.accept(new Gfx());
+    }
+
+    *///?}
     /** Draws something on the HUD every frame, above the vanilla HUD. */
     public static void registerHud(String name, Consumer<Gfx> draw) {
         //? if >=1.21.6 {
         HudElementRegistry.addLast(AutoClickerClient.id(name), (graphics, deltaTracker) -> draw.accept(new Gfx(graphics)));
-        //?} else
-        /*HudRenderCallback.EVENT.register((graphics, deltaTracker) -> draw.accept(new Gfx(graphics)));*/
+        //?} else if >=1.16 {
+        /*HudRenderCallback.EVENT.register((graphics, tickDelta) -> draw.accept(new Gfx(graphics)));
+        *///?} else if >=1.15 {
+        /*HudRenderCallback.EVENT.register(tickDelta -> draw.accept(new Gfx()));
+        *///?} else {
+        /*// Fabric API has no HUD callback for 1.14: GuiMixin draws these after the vanilla HUD.
+        HUDS.add(draw);
+        *///?}
     }
 
     /** Whether the game window has focus (the player isn't tabbed out). */
@@ -198,7 +409,7 @@ public final class Compat {
         //?} else if >=1.21.9 {
         /*return InputConstants.isKeyDown(mc.getWindow(), key);
         *///?} else
-        /*return InputConstants.isKeyDown(mc.getWindow().getWindow(), key);*/
+        /*return InputConstants.isKeyDown(windowHandle(mc), key);*/
     }
 
     /** Swaps an inventory slot with a hotbar slot, as pressing a number key over it in the inventory does. */
@@ -222,8 +433,8 @@ public final class Compat {
      * from an instance to a static method and also follows a Freecam camera on some versions.
      */
     public static Vec3 viewVector(float xRot, float yRot) {
-        float pitch = xRot * Mth.DEG_TO_RAD;
-        float yaw = -yRot * Mth.DEG_TO_RAD;
+        float pitch = xRot * ((float) (Math.PI / 180));
+        float yaw = -yRot * ((float) (Math.PI / 180));
         float horizontal = Mth.cos(pitch);
         return new Vec3(Mth.sin(yaw) * horizontal, -Mth.sin(pitch), Mth.cos(yaw) * horizontal);
     }
@@ -244,10 +455,42 @@ public final class Compat {
         /*GLFW.glfwIconifyWindow(windowHandle(mc));*/
     }
 
-    private static long windowHandle(Minecraft mc) {
+    // The game window's size and scale (Minecraft.window is a field before 1.15).
+    public static int guiWidth(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScaledWidth();
+        //?} else
+        /*return mc.window.getGuiScaledWidth();*/
+    }
+
+    public static int guiHeight(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScaledHeight();
+        //?} else
+        /*return mc.window.getGuiScaledHeight();*/
+    }
+
+    public static double guiScale(Minecraft mc) {
+        //? if >=1.15 {
+        return mc.getWindow().getGuiScale();
+        //?} else
+        /*return mc.window.getGuiScale();*/
+    }
+
+    /** The window size in pixels: width and height. */
+    public static int[] windowSize(Minecraft mc) {
+        //? if >=1.15 {
+        return new int[]{mc.getWindow().getWidth(), mc.getWindow().getHeight()};
+        //?} else
+        /*return new int[]{mc.window.getWidth(), mc.window.getHeight()};*/
+    }
+
+    public static long windowHandle(Minecraft mc) {
         //? if >=1.21.9 {
         return mc.getWindow().handle();
-        //?} else
-        /*return mc.getWindow().getWindow();*/
+        //?} else if >=1.15 {
+        /*return mc.getWindow().getWindow();
+        *///?} else
+        /*return mc.window.getWindow();*/
     }
 }

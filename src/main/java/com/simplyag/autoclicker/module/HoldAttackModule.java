@@ -29,7 +29,7 @@ public class HoldAttackModule extends Module {
         ItemStack held = player.getMainHandItem();
         int left = Inventories.durabilityLeft(held);
         if (min > 0 && left >= 0 && left <= min) {
-            stopWithReason(Component.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.tool_worn", held.getHoverName(), left), true);
             return;
         }
         Input.hold(mc.options.keyAttack);

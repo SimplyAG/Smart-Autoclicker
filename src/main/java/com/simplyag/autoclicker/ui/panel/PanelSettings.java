@@ -1,10 +1,11 @@
 package com.simplyag.autoclicker.ui.panel;
 
+import com.simplyag.autoclicker.util.Compat;
+import com.google.common.collect.ImmutableList;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.module.Module;
 import com.simplyag.autoclicker.module.ModuleManager;
-import net.minecraft.network.chat.CommonComponents;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public final class PanelSettings {
     }
 
     private static String off() {
-        return CommonComponents.OPTION_OFF.getString();
+        return Compat.translatable("options.off").getString();
     }
 
     private static String hearts(int health) {
@@ -34,7 +35,7 @@ public final class PanelSettings {
 
     public static List<Setting> forModule(Module module) {
         if (module == ModuleManager.AUTO_ATTACK) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Choice<>("attack_timing", SmartConfig.AttackTiming.values(), () -> cfg().attackTiming, v -> cfg().attackTiming = v),
                     new Setting.Range("attack_delay", 50, 2000, 10, () -> cfg().attackDelayMs, v -> cfg().attackDelayMs = v,
                             PanelSettings::ms, () -> cfg().attackTiming == SmartConfig.AttackTiming.FIXED),
@@ -46,7 +47,7 @@ public final class PanelSettings {
                     TOOL_DURABILITY);
         }
         if (module == ModuleManager.AUTO_EAT) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Range("eat_at_hunger", 1, 19, 1, () -> cfg().eatAtHunger, v -> cfg().eatAtHunger = v, v -> v + " / 20"),
                     new Setting.Range("eat_at_health", 0, 20, 1, () -> cfg().eatAtHealth, v -> cfg().eatAtHealth = v,
                             v -> v == 0 ? off() : hearts(v)),
@@ -54,16 +55,16 @@ public final class PanelSettings {
                     new Setting.Toggle("restock", () -> cfg().restockFromInventory, v -> cfg().restockFromInventory = v));
         }
         if (module == ModuleManager.HOLD_ATTACK) {
-            return List.of(TOOL_DURABILITY);
+            return ImmutableList.of(TOOL_DURABILITY);
         }
         if (module == ModuleManager.HOLD_USE) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Choice<>("use_mode", SmartConfig.UseMode.values(), () -> cfg().useMode, v -> cfg().useMode = v),
                     new Setting.Range("use_delay", 50, 2000, 10, () -> cfg().useSpamDelayMs, v -> cfg().useSpamDelayMs = v,
                             PanelSettings::ms, () -> cfg().useMode == SmartConfig.UseMode.SPAM));
         }
         if (module == ModuleManager.AUTO_WALK) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Choice<>("walk_direction", SmartConfig.WalkDirection.values(), () -> cfg().walkDirection, v -> cfg().walkDirection = v),
                     new Setting.Toggle("walk_sprint", () -> cfg().walkSprint, v -> {
                         cfg().walkSprint = v;
@@ -76,13 +77,13 @@ public final class PanelSettings {
                     new Setting.Toggle("walk_jump", () -> cfg().walkJump, v -> cfg().walkJump = v));
         }
         if (module == ModuleManager.MOB_SWEEP) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Range("sweep_width", 10, 180, 5, () -> cfg().sweepWidthDeg, v -> cfg().sweepWidthDeg = v, v -> v + "°"),
                     new Setting.Range("sweep_period", 10, 100, 1, () -> cfg().sweepPeriodTenths, v -> cfg().sweepPeriodTenths = v,
                             v -> String.format("%.1f s", v / 10.0)));
         }
         if (module == ModuleManager.ELYTRA_CRUISE) {
-            return List.of(
+            return ImmutableList.of(
                     new Setting.Range("elytra_distance", 500, 50_000, 500, () -> cfg().elytraTargetDistance,
                             v -> cfg().elytraTargetDistance = v, v -> String.format("%,d", v)),
                     new Setting.Range("elytra_min_speed", 5, 60, 1, () -> cfg().elytraMinSpeed, v -> cfg().elytraMinSpeed = v, v -> v + " b/s"),
@@ -92,11 +93,11 @@ public final class PanelSettings {
                     new Setting.Range("elytra_min_durability", 0, 100, 1, () -> cfg().elytraMinDurability,
                             v -> cfg().elytraMinDurability = v, v -> v == 0 ? off() : String.valueOf(v)));
         }
-        return List.of();
+        return ImmutableList.of();
     }
 
     public static List<Setting> safety() {
-        return List.of(
+        return ImmutableList.of(
                 new Setting.Toggle("keep_running", () -> cfg().keepRunningWhenUnfocused, v -> cfg().keepRunningWhenUnfocused = v),
                 new Setting.Range("stop_at_health", 0, 19, 1, () -> cfg().stopAtHealth, v -> cfg().stopAtHealth = v,
                         v -> v == 0 ? off() : hearts(v)),
@@ -108,7 +109,7 @@ public final class PanelSettings {
     }
 
     public static List<Setting> general() {
-        return List.of(
+        return ImmutableList.of(
                 new Setting.Hotkey("key_open_panel", AutoClickerClient::openPanelKey),
                 new Setting.Hotkey("key_stop_all", AutoClickerClient::stopAllKey),
                 new Setting.Toggle("show_hud", () -> cfg().showHud, v -> cfg().showHud = v),

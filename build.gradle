@@ -34,5 +34,8 @@ dependencies {
 	localRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
+// Fabric API's mod id on 26.x (its releases there no longer provide the old "fabric" id).
+ext.sacFabricApiId = 'fabric-api'
+
 // Resources, Java level, jar contents and the in-game tests: shared with remap.gradle.
 apply from: rootProject.file('gradle/target-common.gradle')

@@ -4,12 +4,13 @@ Smart Autoclicker is a [Stonecutter](https://stonecutter.kikugie.dev/) multi-ver
 one Gradle project per Minecraft version (`versions/<mc>/gradle.properties`), and as few published jars as possible.
 
 Two buildscripts share `gradle/target-common.gradle`: `build.gradle` for 26.x (unobfuscated, non-remapping Loom) and
-`remap.gradle` for 1.20 – 1.21.11 (obfuscated: compiled against Mojang's official mappings, remapped to intermediary by
+`remap.gradle` for 1.14.4 – 1.21.11 (obfuscated: compiled against Mojang's official mappings, remapped to intermediary by
 `remapJar`). `settings.gradle` picks one per version. The code uses Mojang names everywhere.
 
-You need JDK 17, 21 and 25 (Gradle finds installed JDKs through toolchains): 1.20 – 1.20.4 build and run on 17,
-1.20.5 – 1.21.11 on 21, 26.x on 25. Code shared by every version is written for Java 17 (no pattern `switch`, no
-`Math.clamp`).
+Each version builds and runs on the Java its players have: 8 for 1.14 – 1.16, 16 for 1.17, 17 for 1.18 – 1.20.4, 21 for
+1.20.5 – 1.21.11, 25 for 26.x. Gradle finds installed JDKs, and downloads missing ones (foojay toolchain resolver).
+Code shared by every version is written for **Java 8**: no records, `var`, arrow `switch`, `instanceof` patterns,
+`List.of`/`Set.of`/`Map.of` (use Guava's `ImmutableList` etc., which every Minecraft version ships) or `Math.clamp`.
 
 ```bash
 ./gradlew :26.3:build                    # one version
@@ -42,10 +43,12 @@ for it, so your IDE checks the right branch.
 The tests themselves are in `src/gametest/.../SmartTests.java`, written against a small `TestClient` interface:
 
 - **1.21.4 and later**: Fabric API's client game-test API runs them (`AutoClickerClientGameTest`).
-- **1.20 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
-  mod's own harness (`src/harness`) into the test mod instead. It launches a normal dev client, creates a flat world
+- **1.14.4 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
+  mod's own harness (`src/gametest/.../harness`) into the test mod instead. It launches a normal dev client, creates a flat world
   the way Fabric's test world builder does, runs the same tests and quits (exit code 1 on a failure). Differences: the
-  game isn't paused between test steps, and mouse clicks go straight to the open screen.
+  game isn't paused between test steps, and mouse clicks go straight to the open screen. Before 1.19.4 the Create World
+  screen can't pick a flat world from code, so the harness makes a normal world and builds a stone floor at y=150 to
+  test on.
 
 Either way the task is `runClientGameTest`, the window is minimized and the game is muted, and screenshots land in
 `versions/<mc>/build/run/clientGameTest/screenshots/`. On Linux CI the 1.20.x and 1.21.x games run under `xvfb-run`.

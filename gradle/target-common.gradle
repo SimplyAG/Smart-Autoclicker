@@ -15,10 +15,12 @@ fabricApi {
 		eula = true
 	}
 }
+if (fabricClientGameTests) {
+	sourceSets.matching { it.name == 'gametest' }.configureEach { it.java.exclude 'com/simplyag/autoclicker/gametest/harness/**' }
+}
 if (!fabricClientGameTests) {
 	sourceSets.matching { it.name == 'gametest' }.configureEach { SourceSet gametest ->
 		// The harness only builds where Fabric's API is missing; the Fabric runner only where it exists.
-		gametest.java.srcDir rootProject.file('src/harness/java')
 		gametest.java.exclude 'com/simplyag/autoclicker/gametest/AutoClickerClientGameTest.java'
 		loom.runs.register('clientGameTest') {
 			client()
@@ -49,12 +51,14 @@ processResources {
 	inputs.property "minecraft_dep", sacMinecraftDepItems
 	inputs.property "java_version", javaVersion
 	inputs.property "loader_floor", project.loader_floor
+	inputs.property "fabric_api_id", sacFabricApiId
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version,
 				"minecraft_dep": sacMinecraftDepItems,
 				"java_version": javaVersion,
-				"loader_floor": project.loader_floor
+				"loader_floor": project.loader_floor,
+				"fabric_api_id": sacFabricApiId
 	}
 
 	// The shared mixins.json says JAVA_21; Mixin refuses levels the running Java can't do, so set it per target.
@@ -64,7 +68,8 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = javaVersion
+	// javac 8 has no --release flag; it only targets Java 8 anyway.
+	if (javaVersion > 8) it.options.release = javaVersion
 	it.options.encoding = "UTF-8"
 	// One fixed javac per target, whatever JDK runs Gradle: javac versions number lambdas differently, which would
 	// make otherwise identical classes differ between a group's members.
@@ -85,8 +90,14 @@ jar {
 }
 
 tasks.matching { it.name == 'runClientGameTest' }.configureEach {
-	// The game runs on the target's Java, not whatever JDK runs Gradle.
-	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+	// The game runs on this version's own Java (what its players have), not the group lead's level or the JDK running
+	// Gradle: 1.18's Fabric API needs Java 17 although the 1.17-1.18.2 jar is compiled for 16.
+	def runtimeJava = Math.max(javaVersion, (project.java_version as String) as int)
+	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(runtimeJava) }
+	// On Linux CI Loom wraps the game in its own xvfb-run, building the java command line by hand. On Java 8 (no @argfiles)
+	// that command loses the classpath ("Could not find or load main class"), so Java 8 runs skip Loom's wrapper; CI
+	// already starts every 1.x test inside xvfb-run, so the game still has a display.
+	if (runtimeJava < 9) useXvfb = false
 	// gametest_disable_network_synchronizer=true in a version's gradle.properties: see the comment there.
 	if (project.findProperty('gametest_disable_network_synchronizer') == 'true') {
 		systemProperty 'fabric.client.gametest.disableNetworkSynchronizer', 'true'

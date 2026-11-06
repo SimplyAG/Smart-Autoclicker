@@ -1,6 +1,6 @@
 # Smart Autoclicker
 
-Smart AFK automation for Minecraft **1.20 – 1.21.11** and **26.1 – 26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
+Smart AFK automation for Minecraft **1.14.4 – 1.21.11** and **26.1 – 26.3** (Fabric, client-side). Everything runs through Minecraft's own input handling, so it respects attack cooldowns, reach and item use exactly like real clicks, and it keeps working while you're tabbed out.
 
 ## Features
 
@@ -48,7 +48,7 @@ Settings are saved to `config/smart-autoclicker.json`. Nothing starts automatica
 
 ## Build & test
 
-One source tree builds every supported Minecraft version with [Stonecutter](https://stonecutter.kikugie.dev/). Requires JDK 17 (for 1.20 – 1.20.4), JDK 21 (for 1.20.5 – 1.21.11) and JDK 25 (for 26.x).
+One source tree builds every supported Minecraft version with [Stonecutter](https://stonecutter.kikugie.dev/). Requires JDK 25 to run Gradle; the JDK each version needs (8, 16, 17, 21 or 25) is found or downloaded automatically.
 
 ```bash
 ./gradlew build verifyGroupClasses       # every version; jars in versions/<mc>/build/libs

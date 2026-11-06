@@ -1,13 +1,19 @@
 package com.simplyag.autoclicker.gametest;
 
+import com.google.common.collect.ImmutableList;
 import com.simplyag.autoclicker.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.config.SmartConfig;
 import com.simplyag.autoclicker.module.ModuleManager;
 import com.simplyag.autoclicker.ui.ControlPanelScreen;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+//? if <1.16
+/*import net.minecraft.world.level.dimension.DimensionType;*/
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 //? if >=26.2 {
@@ -17,6 +23,7 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.Items;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Plays through each feature in a real singleplayer world and fails loudly if one doesn't work.
@@ -33,11 +40,19 @@ public final class SmartTests {
      */
     public static void prepare(TestClient context) {
         context.runOnClient(mc -> {
-            mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
             // Less work for slow machines (CI runners render in software): the lowest simulation distance, and a
             // render distance that still keeps chunks ahead of the elytra flight loaded.
+            //? if >=1.19.3 {
+            mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
+            //?} else
+            /*mc.options.setSoundCategoryVolume(SoundSource.MASTER, 0.0F);*/
+            //? if >=1.19 {
             mc.options.simulationDistance().set(5);
             mc.options.renderDistance().set(4);
+            //?} else
+            /*mc.options.renderDistance = 4;*/
+            //? if >=1.18 <1.19
+            /*mc.options.simulationDistance = 5;*/
             Compat.minimizeWindow(mc);
         });
     }
@@ -50,6 +65,8 @@ public final class SmartTests {
         server.runCommand("time set noon");
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(20);
+        // Where the tests stand: the flat world's floor, or the harness's sky arena on older versions. Flights end here.
+        start = context.computeOnClient(mc -> new double[]{mc.player.position().x, mc.player.position().y, mc.player.position().z});
 
         testAutoAttack(context, server);
         testProtectsNamedMobs(context, server);
@@ -71,11 +88,11 @@ public final class SmartTests {
      */
     private static void testFreecam(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p hotbar.0 with diamond_sword");
+        server.runCommand(replaceItem("hotbar.0", "diamond_sword"));
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(10);
         toggleFreecam(context);
-        context.runOnClient(mc -> mc.getCameraEntity().setYRot(180));
+        context.runOnClient(mc -> Compat.setYRot(mc.getCameraEntity(), 180));
         check(context.computeOnClient(mc -> mc.getCameraEntity() != mc.player), "Freecam should detach the camera");
 
         // Auto Attack hits what the player faces, not what the camera sees
@@ -87,23 +104,23 @@ public final class SmartTests {
         context.takeScreenshot("sac_freecam_attack");
 
         // Sweep turns the player and leaves the camera alone
-        float startYaw = context.computeOnClient(mc -> mc.player.getYRot());
-        float cameraYaw = context.computeOnClient(mc -> mc.getCameraEntity().getYRot());
+        float startYaw = context.computeOnClient(mc -> Compat.yRot(mc.player));
+        float cameraYaw = context.computeOnClient(mc -> Compat.yRot(mc.getCameraEntity()));
         context.runOnClient(mc -> ModuleManager.MOB_SWEEP.start(true));
         float max = 0;
         for (int i = 0; i < SmartConfig.get().sweepPeriodTenths * 2 + 10; i++) {
             context.waitTick();
-            max = Math.max(max, Math.abs(context.computeOnClient(mc -> mc.player.getYRot()) - startYaw));
+            max = Math.max(max, Math.abs(context.computeOnClient(mc -> Compat.yRot(mc.player)) - startYaw));
         }
         check(max > SmartConfig.get().sweepWidthDeg / 2f - 3, "Mob Sweep should turn the player with Freecam on, but only went " + max + "°");
-        float cameraTurn = Math.abs(context.computeOnClient(mc -> mc.getCameraEntity().getYRot()) - cameraYaw);
+        float cameraTurn = Math.abs(context.computeOnClient(mc -> Compat.yRot(mc.getCameraEntity())) - cameraYaw);
         check(cameraTurn < 1, "Mob Sweep shouldn't turn the camera, but it moved " + cameraTurn + "°");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
         toggleFreecam(context);
 
         // Elytra Cruise carries the camera along
-        server.runCommand("item replace entity @p armor.chest with elytra");
-        server.runCommand("item replace entity @p inventory.5 with firework_rocket 32");
+        server.runCommand(replaceItem("armor.chest", "elytra"));
+        server.runCommand(replaceItem("inventory.5", "firework_rocket 32"));
         server.runCommand("execute as @p at @p run tp @p ~ ~60 ~ 0 0");
         context.waitTicks(8);
         context.getInput().holdKey(options -> options.keyJump);
@@ -114,10 +131,10 @@ public final class SmartTests {
         toggleFreecam(context);
         context.waitTicks(2);
         double[] before = context.computeOnClient(mc -> offset(mc.player, mc.getCameraEntity()));
-        double startZ = context.computeOnClient(mc -> mc.player.getZ());
+        double startZ = context.computeOnClient(mc -> mc.player.position().z);
         context.waitTicks(60);
         double[] after = context.computeOnClient(mc -> offset(mc.player, mc.getCameraEntity()));
-        double flown = Math.abs(context.computeOnClient(mc -> mc.player.getZ()) - startZ);
+        double flown = Math.abs(context.computeOnClient(mc -> mc.player.position().z) - startZ);
         boolean stillFlying = context.computeOnClient(mc -> mc.player.isFallFlying());
         context.takeScreenshot("sac_freecam_elytra");
         check(stillFlying && flown > 20, "Should keep flying with Freecam on, but flew " + flown + " blocks");
@@ -125,13 +142,13 @@ public final class SmartTests {
         check(drift < 3, "The camera should stay with the player, but drifted " + drift + " blocks");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
         toggleFreecam(context);
-        server.runCommand("execute as @p at @p run tp @p ~ -60 ~");
+        server.runCommand(backToStart());
         server.runCommand("clear @p");
         context.waitTicks(10);
     }
 
     private static double[] offset(Entity player, Entity camera) {
-        return new double[]{camera.getX() - player.getX(), camera.getZ() - player.getZ()};
+        return new double[]{camera.position().x - player.position().x, camera.position().z - player.position().z};
     }
 
     private static void toggleFreecam(TestClient context) {
@@ -158,28 +175,28 @@ public final class SmartTests {
         cfg.walkSprint = false;
         cfg.walkCrouch = true;
         context.waitTicks(10);
-        check(context.computeOnClient(mc -> mc.player.isCrouching()), "Auto Walk should crouch");
+        check(context.computeOnClient(mc -> crouching(mc.player)), "Auto Walk should crouch");
         check(!context.computeOnClient(mc -> mc.player.isSprinting()), "Crouching should end the sprint");
         context.takeScreenshot("sac_walk_crouch");
 
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.stop(false));
         context.waitTicks(5);
-        check(!context.computeOnClient(mc -> mc.player.isCrouching()), "Stopping Auto Walk should stand back up");
+        check(!context.computeOnClient(mc -> crouching(mc.player)), "Stopping Auto Walk should stand back up");
 
-        context.runOnClient(mc -> mc.options.toggleCrouch().set(true));
+        context.runOnClient(mc -> setToggleCrouch(mc, true));
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.start(false));
         boolean steady = true;
         context.waitTicks(3);
         for (int i = 0; i < 10; i++) {
             context.waitTick();
-            steady &= context.computeOnClient(mc -> mc.options.keyShift.isDown());
+            steady &= context.computeOnClient(mc -> Compat.sneakKey(mc.options).isDown());
         }
         check(steady, "Auto Walk's crouch shouldn't flicker with Toggle Sneak on");
         context.runOnClient(mc -> ModuleManager.AUTO_WALK.stop(false));
         context.waitTicks(5);
-        check(!context.computeOnClient(mc -> mc.options.keyShift.isDown()), "Stopping Auto Walk should release a toggled crouch");
+        check(!context.computeOnClient(mc -> Compat.sneakKey(mc.options).isDown()), "Stopping Auto Walk should release a toggled crouch");
 
-        context.runOnClient(mc -> mc.options.toggleCrouch().set(false));
+        context.runOnClient(mc -> setToggleCrouch(mc, false));
         cfg.walkCrouch = false;
         server.runCommand("execute as @p at @p run tp @p ~ ~ ~ 0 0");
         context.waitTicks(5);
@@ -206,18 +223,18 @@ public final class SmartTests {
             check(!ModuleManager.AUTO_EAT.isRunning(), "Hold Right Click should stop Auto Eat");
             ModuleManager.stopAll(null);
 
-            check(ModuleManager.normalize(List.of("hold_use", "auto_eat", "auto_attack")).equals(List.of("hold_use")),
+            check(ModuleManager.normalize(ImmutableList.of("hold_use", "auto_eat", "auto_attack")).equals(ImmutableList.of("hold_use")),
                     "A preset can't keep modules that conflict with Hold Right Click");
-            check(ModuleManager.normalize(List.of("mob_sweep", "hold_attack", "auto_eat")).equals(List.of("mob_sweep", "auto_eat", "auto_attack")),
+            check(ModuleManager.normalize(ImmutableList.of("mob_sweep", "hold_attack", "auto_eat")).equals(ImmutableList.of("mob_sweep", "auto_eat", "auto_attack")),
                     "A preset with Mob Sweep should drop Hold Left Click and gain Auto Attack");
-            check(ModuleManager.normalize(List.of("hold_attack", "mob_sweep")).equals(List.of("hold_attack")),
+            check(ModuleManager.normalize(ImmutableList.of("hold_attack", "mob_sweep")).equals(ImmutableList.of("hold_attack")),
                     "Mob Sweep can't stay when Auto Attack can't join");
         });
         context.waitTick();
     }
 
     private static void testMobSweep(TestClient context) {
-        float startYaw = context.computeOnClient(mc -> mc.player.getYRot());
+        float startYaw = context.computeOnClient(mc -> Compat.yRot(mc.player));
         int width = SmartConfig.get().sweepWidthDeg;
         context.runOnClient(mc -> ModuleManager.MOB_SWEEP.start(true));
         float min = 0;
@@ -225,7 +242,7 @@ public final class SmartTests {
         // One full cycle plus a bit
         for (int i = 0; i < SmartConfig.get().sweepPeriodTenths * 2 + 10; i++) {
             context.waitTick();
-            float offset = context.computeOnClient(mc -> mc.player.getYRot()) - startYaw;
+            float offset = context.computeOnClient(mc -> Compat.yRot(mc.player)) - startYaw;
             min = Math.min(min, offset);
             max = Math.max(max, offset);
             if (i == 15) context.takeScreenshot("sac_mob_sweep");
@@ -234,7 +251,7 @@ public final class SmartTests {
                 "Mob Sweep should turn about " + width / 2 + "° each way, but went " + min + "° to " + max + "°");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
         context.waitTick();
-        float endYaw = context.computeOnClient(mc -> mc.player.getYRot());
+        float endYaw = context.computeOnClient(mc -> Compat.yRot(mc.player));
         check(Math.abs(endYaw - startYaw) < 1f, "Mob Sweep should turn back to where it started (off by " + (endYaw - startYaw) + "°)");
     }
 
@@ -242,12 +259,12 @@ public final class SmartTests {
     private static void testControlPanelClick(TestClient context) {
         context.setScreen(() -> new ControlPanelScreen(null));
         context.waitForScreen(ControlPanelScreen.class);
-        context.getInput().pressKey(InputConstants.KEY_DOWN); // Presets -> Auto Attack
+        context.getInput().pressKey(Compat.KEY_DOWN); // Presets -> Auto Attack
         context.waitTicks(10); // let the open animation finish
 
         double[] point = context.computeOnClient(mc -> {
-            int width = mc.getWindow().getGuiScaledWidth();
-            int height = mc.getWindow().getGuiScaledHeight();
+            int width = Compat.guiWidth(mc);
+            int height = Compat.guiHeight(mc);
             int w = Math.min(480, width - 20);
             int h = Math.min(280, height - 16);
             int x = (width - w) / 2;
@@ -255,7 +272,7 @@ public final class SmartTests {
             int contentW = w - 124 - 2 - 10 * 2 - 4;
             int switchX = x + 124 + 1 + 10 + 2 + contentW - 34 + 17;
             int switchY = y + 26 + 1 + 10 + 8 + 8;
-            double scale = mc.getWindow().getGuiScale();
+            double scale = Compat.guiScale(mc);
             return new double[]{switchX * scale, switchY * scale};
         });
         context.getInput().setCursorPos(point[0], point[1]);
@@ -271,12 +288,12 @@ public final class SmartTests {
 
     private static void testAutoAttack(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p hotbar.0 with diamond_sword");
+        server.runCommand(replaceItem("hotbar.0", "diamond_sword"));
         server.runCommand("execute as @p at @p run summon husk ^ ^ ^2 {NoAI:1b}");
         context.waitTicks(10);
 
         context.runOnClient(mc -> {
-            Compat.selectSlot(mc.player.getInventory(), 0);
+            Compat.selectSlot(Compat.inventory(mc.player), 0);
             ModuleManager.AUTO_ATTACK.start(true);
         });
         context.waitTicks(15);
@@ -321,33 +338,33 @@ public final class SmartTests {
 
     private static void testAutoEatFromHotbar(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p hotbar.0 with diamond_sword");
-        server.runCommand("item replace entity @p hotbar.4 with cooked_beef 16");
+        server.runCommand(replaceItem("hotbar.0", "diamond_sword"));
+        server.runCommand(replaceItem("hotbar.4", "cooked_beef 16"));
         setHunger(server, 6);
         context.waitTicks(5);
 
         context.runOnClient(mc -> {
-            Compat.selectSlot(mc.player.getInventory(), 0);
+            Compat.selectSlot(Compat.inventory(mc.player), 0);
             ModuleManager.AUTO_EAT.start(true);
         });
         context.waitFor(mc -> mc.player.isUsingItem(), 20 * 5);
         context.takeScreenshot("sac_auto_eat_eating");
         context.waitFor(mc -> mc.player.getFoodData().getFoodLevel() > 6 && !ModuleManager.AUTO_EAT.isBusy(), 20 * 10);
 
-        int selected = context.computeOnClient(mc -> Compat.selectedSlot(mc.player.getInventory()));
+        int selected = context.computeOnClient(mc -> Compat.selectedSlot(Compat.inventory(mc.player)));
         check(selected == 0, "Auto Eat should switch back to the sword in slot 1, but slot " + (selected + 1) + " is selected");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
     }
 
     private static void testAutoEatRestocksFromInventory(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p hotbar.0 with diamond_sword");
-        server.runCommand("item replace entity @p inventory.10 with bread 8");
+        server.runCommand(replaceItem("hotbar.0", "diamond_sword"));
+        server.runCommand(replaceItem("inventory.10", "bread 8"));
         setHunger(server, 6);
         context.waitTicks(5);
 
         context.runOnClient(mc -> {
-            Compat.selectSlot(mc.player.getInventory(), 0);
+            Compat.selectSlot(Compat.inventory(mc.player), 0);
             ModuleManager.AUTO_EAT.start(false);
         });
         context.waitFor(mc -> mc.player.getFoodData().getFoodLevel() > 6 && !ModuleManager.AUTO_EAT.isBusy(), 20 * 10);
@@ -356,12 +373,12 @@ public final class SmartTests {
 
     private static void testHoldRightClickEats(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p hotbar.0 with golden_carrot 16");
+        server.runCommand(replaceItem("hotbar.0", "golden_carrot 16"));
         setHunger(server, 4);
         context.waitTicks(5);
 
         context.runOnClient(mc -> {
-            Compat.selectSlot(mc.player.getInventory(), 0);
+            Compat.selectSlot(Compat.inventory(mc.player), 0);
             ModuleManager.HOLD_USE.start(true);
         });
         context.waitFor(mc -> mc.player.getFoodData().getFoodLevel() >= 10, 20 * 10);
@@ -374,9 +391,9 @@ public final class SmartTests {
 
     private static void testElytraCruise(TestClient context, TestClient.Server server) {
         server.runCommand("clear @p");
-        server.runCommand("item replace entity @p armor.chest with elytra");
-        server.runCommand("item replace entity @p hotbar.0 with diamond_sword");
-        server.runCommand("item replace entity @p inventory.5 with firework_rocket 32");
+        server.runCommand(replaceItem("armor.chest", "elytra"));
+        server.runCommand(replaceItem("hotbar.0", "diamond_sword"));
+        server.runCommand(replaceItem("inventory.5", "firework_rocket 32"));
         server.runCommand("execute as @p at @p run tp @p ~ ~60 ~ 0 0");
         int savedDistance = SmartConfig.get().elytraTargetDistance;
         SmartConfig.get().elytraTargetDistance = 300;
@@ -389,7 +406,7 @@ public final class SmartTests {
         context.takeScreenshot("sac_elytra_takeoff");
         context.waitFor(mc -> mc.player.isFallFlying(), 40);
         context.runOnClient(mc -> {
-            Compat.selectSlot(mc.player.getInventory(), 0);
+            Compat.selectSlot(Compat.inventory(mc.player), 0);
             ModuleManager.ELYTRA_CRUISE.start(true);
         });
         context.waitTicks(60);
@@ -397,13 +414,13 @@ public final class SmartTests {
 
         context.waitFor(mc -> !ModuleManager.ELYTRA_CRUISE.isRunning(), 20 * 40);
         SmartConfig.get().elytraTargetDistance = savedDistance;
-        int rockets = context.computeOnClient(mc -> 32 - mc.player.getInventory().countItem(Items.FIREWORK_ROCKET));
-        int selected = context.computeOnClient(mc -> Compat.selectedSlot(mc.player.getInventory()));
+        int rockets = context.computeOnClient(mc -> 32 - Compat.inventory(mc.player).countItem(Items.FIREWORK_ROCKET));
+        int selected = context.computeOnClient(mc -> Compat.selectedSlot(Compat.inventory(mc.player)));
         check(rockets >= 1, "Elytra Cruise never fired a rocket");
         check(selected == 0, "Elytra Cruise should switch back to slot 1 after firing, but slot " + (selected + 1) + " is selected");
         context.takeScreenshot("sac_elytra_arrived");
         context.runOnClient(mc -> ModuleManager.stopAll(null));
-        server.runCommand("execute as @p at @p run tp @p ~ -60 ~");
+        server.runCommand(backToStart());
         server.runCommand("clear @p");
         context.waitTicks(20);
     }
@@ -422,7 +439,7 @@ public final class SmartTests {
         for (String page : pages) {
             context.waitTicks(3);
             context.takeScreenshot("sac_panel_" + page);
-            context.getInput().pressKey(InputConstants.KEY_DOWN);
+            context.getInput().pressKey(Compat.KEY_DOWN);
         }
         context.setScreen(() -> null);
         context.waitTicks(10);
@@ -442,7 +459,48 @@ public final class SmartTests {
         //? if >=26.2 {
         return server.overworld().getEntities(EntityTypes.HUSK, e -> e.isAlive()).size();
         //?} else
-        /*return server.overworld().getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+        /*return overworld(server).getEntities(EntityType.HUSK, e -> e.isAlive()).size();*/
+    }
+
+    /** The overworld (MinecraftServer.overworld() exists from 1.16). */
+    public static ServerLevel overworld(MinecraftServer server) {
+        //? if >=1.16 {
+        return server.overworld();
+        //?} else
+        /*return server.getLevel(DimensionType.OVERWORLD);*/
+    }
+
+    /** Whether the player is crouching (isSneaking in 1.14). */
+    private static boolean crouching(Player player) {
+        //? if >=1.15 {
+        return player.isCrouching();
+        //?} else
+        /*return player.isSneaking();*/
+    }
+
+    /** Puts an item in a slot: /item replace from 1.17, /replaceitem before. */
+    private static String replaceItem(String slot, String item) {
+        //? if >=1.17 {
+        return "item replace entity @p " + slot + " with " + item;
+        //?} else
+        /*return "replaceitem entity @p " + slot + " " + item;*/
+    }
+
+    /** Where each test run stands; set at the start of {@link #run}. */
+    private static double[] start = new double[3];
+
+    /** Teleports the player back to where the tests started (after a flight). */
+    private static String backToStart() {
+        return String.format(Locale.ROOT, "tp @p %.3f %.3f %.3f", start[0], start[1], start[2]);
+    }
+
+    private static void setToggleCrouch(Minecraft mc, boolean toggle) {
+        //? if >=1.19 {
+        mc.options.toggleCrouch().set(toggle);
+        //?} else if >=1.15 {
+        /*mc.options.toggleCrouch = toggle;
+        *///?}
+        // 1.14 has no Toggle Sneak: there the crouch is always held, which the same checks cover.
     }
 
     /** A CustomName value for /summon: a plain string from 1.20.3, a JSON text component in quotes before. */

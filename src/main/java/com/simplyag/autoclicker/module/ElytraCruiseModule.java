@@ -64,8 +64,8 @@ public class ElytraCruiseModule extends Module {
         LocalPlayer player = mc.player;
         if (player == null || mc.gameMode == null) return;
         SmartConfig cfg = SmartConfig.get();
-        rocketsLeft = Inventories.count(player, s -> s.is(Items.FIREWORK_ROCKET))
-                + (player.getOffhandItem().is(Items.FIREWORK_ROCKET) ? player.getOffhandItem().getCount() : 0);
+        rocketsLeft = Inventories.count(player, s -> s.getItem() == Items.FIREWORK_ROCKET)
+                + (player.getOffhandItem().getItem() == Items.FIREWORK_ROCKET ? player.getOffhandItem().getCount() : 0);
 
         // A rocket queued last tick after switching to it: fire it now, then switch back.
         if (rocketQueued) {
@@ -78,14 +78,14 @@ public class ElytraCruiseModule extends Module {
         ItemStack elytra = player.getItemBySlot(EquipmentSlot.CHEST);
         int durability = Inventories.durabilityLeft(elytra);
         if (Compat.isGlider(elytra) && durability >= 0 && durability <= cfg.elytraMinDurability) {
-            stopWithReason(Component.translatable("smart-autoclicker.toast.elytra_worn", durability), true);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.elytra_worn", durability), true);
             return;
         }
 
         if (!player.isFallFlying()) {
             lastPos = null;
             if (flying && ++groundedTicks > 40) {
-                stopWithReason(Component.translatable("smart-autoclicker.toast.landed", (int) distance), false);
+                stopWithReason(Compat.translatable("smart-autoclicker.toast.landed", (int) distance), false);
             }
             return;
         }
@@ -93,7 +93,7 @@ public class ElytraCruiseModule extends Module {
         if (!flying) {
             flying = true;
             start = player.position();
-            targetY = player.getY();
+            targetY = player.position().y;
         }
 
         Vec3 pos = player.position();
@@ -104,7 +104,7 @@ public class ElytraCruiseModule extends Module {
         speed = Math.hypot(motion.x, motion.z) * 20;
 
         if (distance >= cfg.elytraTargetDistance) {
-            stopWithReason(Component.translatable("smart-autoclicker.toast.arrived", (int) distance), false);
+            stopWithReason(Compat.translatable("smart-autoclicker.toast.arrived", (int) distance), false);
             return;
         }
         if (Compat.screen(mc) != null) return;
@@ -128,27 +128,27 @@ public class ElytraCruiseModule extends Module {
         Entity camera = mc.getCameraEntity();
         if (cfg.elytraCameraFollow && lastPos != null) {
             Vec3 moved = player.position().subtract(lastPos);
-            camera.setPos(camera.getX() + moved.x, camera.getY() + moved.y, camera.getZ() + moved.z);
+            camera.setPos(camera.position().x + moved.x, camera.position().y + moved.y, camera.position().z + moved.z);
         }
         if (cfg.elytraCameraSteer) {
-            float yaw = player.getYRot();
+            float yaw = Compat.yRot(player);
             player.yRotO = yaw;
-            player.setYRot(yaw + Mth.clamp(Mth.wrapDegrees(camera.getYRot() - yaw), -MAX_YAW_STEP, MAX_YAW_STEP));
+            Compat.setYRot(player, yaw + Mth.clamp(Mth.wrapDegrees(Compat.yRot(camera) - yaw), -MAX_YAW_STEP, MAX_YAW_STEP));
         }
     }
 
     /** Pitches gently up when below the takeoff height and down when above it. */
     private void holdAltitude(LocalPlayer player) {
-        double below = targetY - player.getY();
+        double below = targetY - player.position().y;
         float desired = (float) Mth.clamp(-4 - below * 1.5, -30, 15);
-        float pitch = player.getXRot();
+        float pitch = Compat.xRot(player);
         float next = pitch + Mth.clamp(desired - pitch, -MAX_PITCH_STEP, MAX_PITCH_STEP);
         player.xRotO = pitch;
-        player.setXRot(next);
+        Compat.setXRot(player, next);
     }
 
     private void useRocket(Minecraft mc, LocalPlayer player) {
-        if (player.getOffhandItem().is(Items.FIREWORK_ROCKET)) {
+        if (player.getOffhandItem().getItem() == Items.FIREWORK_ROCKET) {
             fire(mc, player, InteractionHand.OFF_HAND);
             return;
         }
@@ -158,23 +158,23 @@ public class ElytraCruiseModule extends Module {
             if (stored != -1 && Inventories.swapIntoHotbar(player, stored, Inventories.spareHotbarSlot(player))) {
                 rocketCooldown = 2;
             } else {
-                stopWithReason(Component.translatable("smart-autoclicker.toast.out_of_rockets", (int) distance), true);
+                stopWithReason(Compat.translatable("smart-autoclicker.toast.out_of_rockets", (int) distance), true);
             }
             return;
         }
-        int selected = Compat.selectedSlot(player.getInventory());
+        int selected = Compat.selectedSlot(Compat.inventory(player));
         if (slot == selected) {
             fire(mc, player, InteractionHand.MAIN_HAND);
         } else {
             previousSlot = selected;
-            Compat.selectSlot(player.getInventory(), slot);
+            Compat.selectSlot(Compat.inventory(player), slot);
             rocketQueued = true; // fire next tick, once the slot change has reached the server
         }
     }
 
     private void fire(Minecraft mc, LocalPlayer player, InteractionHand hand) {
-        if (!player.getItemInHand(hand).is(Items.FIREWORK_ROCKET) || mc.gameMode == null) return;
-        mc.gameMode.useItem(player, hand);
+        if (player.getItemInHand(hand).getItem() != Items.FIREWORK_ROCKET || mc.gameMode == null) return;
+        Compat.useItem(mc, player, hand);
         rocketCooldown = ROCKET_COOLDOWN_TICKS;
         Session session = ModuleManager.session();
         if (session != null) session.rocketsFired++;
@@ -182,15 +182,15 @@ public class ElytraCruiseModule extends Module {
 
     private void restoreSlot(@Nullable LocalPlayer player) {
         if (player != null && previousSlot >= 0) {
-            Compat.selectSlot(player.getInventory(), previousSlot);
+            Compat.selectSlot(Compat.inventory(player), previousSlot);
         }
         previousSlot = -1;
     }
 
     @Override
     public @Nullable Component status() {
-        if (!flying) return Component.translatable("smart-autoclicker.status.waiting_takeoff");
-        return Component.translatable("smart-autoclicker.status.elytra",
+        if (!flying) return Compat.translatable("smart-autoclicker.status.waiting_takeoff");
+        return Compat.translatable("smart-autoclicker.status.elytra",
                 String.format("%,d", (int) distance), String.format("%,d", SmartConfig.get().elytraTargetDistance),
                 (int) speed, rocketsLeft);
     }
