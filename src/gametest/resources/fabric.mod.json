@@ -12,6 +12,9 @@
 			"com.simplyag.autoclicker.gametest.HarnessEntrypoint"
 		]
 	},
+	"mixins": [
+		"smart-autoclicker-gametest.mixins.json"
+	],
 	"depends": {
 		"smart-autoclicker": "*"
 	}

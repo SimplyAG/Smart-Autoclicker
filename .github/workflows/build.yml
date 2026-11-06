@@ -29,8 +29,9 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          # 21 builds and runs the 1.21.x targets, 25 the 26.x ones and Gradle (the last one listed is the default).
+          # 17 builds and runs 1.20-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
           java-version: |
+            17
             21
             25
       - uses: gradle/actions/setup-gradle@v5
@@ -56,14 +57,15 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          # 21 builds and runs the 1.21.x targets, 25 the 26.x ones and Gradle (the last one listed is the default).
+          # 17 builds and runs 1.20-1.20.4, 21 1.20.5-1.21.11, 25 the 26.x targets and Gradle (the last one is the default).
           java-version: |
+            17
             21
             25
       - uses: gradle/actions/setup-gradle@v5
       - run: chmod +x ./gradlew
-      # Software rendering for the headless game, as Fabric API's own client game tests use. 1.21.x renders with
-      # OpenGL through GLFW and needs a display, so it runs inside a virtual X server.
+      # Software rendering for the headless game, as Fabric API's own client game tests use. 1.20.x and 1.21.x render
+      # with OpenGL through GLFW and need a display, so it runs inside a virtual X server.
       - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libgl1-mesa-dri xvfb
       - name: In-game tests
         env:

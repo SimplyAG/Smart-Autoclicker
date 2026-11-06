@@ -7,11 +7,14 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.MutableComponent;
+//? if >=1.20.5
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
@@ -78,6 +81,54 @@ public final class Compat {
         return entity.getOwnerReference() != null;
         //?} else
         /*return entity.getOwnerUUID() != null;*/
+    }
+
+    /** How far away the player can hit an entity. */
+    public static double entityReach(LocalPlayer player) {
+        //? if >=1.20.5 {
+        return player.entityInteractionRange();
+        //?} else
+        /*return player.getAbilities().instabuild ? 6.0 : 3.0;*/
+    }
+
+    /** Creative mode: no hunger, no item use-up. */
+    public static boolean hasInfiniteMaterials(LocalPlayer player) {
+        //? if >=1.20.5 {
+        return player.hasInfiniteMaterials();
+        //?} else
+        /*return player.getAbilities().instabuild;*/
+    }
+
+    /** Colours a text component with an ARGB/RGB colour. */
+    public static MutableComponent withColor(MutableComponent text, int color) {
+        //? if >=1.20.3 {
+        return text.withColor(color);
+        //?} else
+        /*return text.withStyle(style -> style.withColor(color & 0xFFFFFF));*/
+    }
+
+    /** A food item's properties, or null if it isn't food. */
+    public static @Nullable FoodProperties food(ItemStack stack) {
+        //? if >=1.20.5 {
+        return stack.get(DataComponents.FOOD);
+        //?} else
+        /*return stack.getItem().getFoodProperties();*/
+    }
+
+    /** Hunger points a food restores. */
+    public static int nutrition(FoodProperties food) {
+        //? if >=1.20.5 {
+        return food.nutrition();
+        //?} else
+        /*return food.getNutrition();*/
+    }
+
+    /** Saturation points a food restores. */
+    public static float saturation(FoodProperties food) {
+        //? if >=1.20.5 {
+        return food.saturation();
+        //?} else
+        /*return food.getNutrition() * food.getSaturationModifier() * 2.0F;*/
     }
 
     /** Whether a chest-slot item lets you glide: any glider from 1.21.2, only the elytra before. */

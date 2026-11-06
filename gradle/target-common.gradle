@@ -94,3 +94,7 @@ tasks.matching { it.name == 'runClientGameTest' }.configureEach {
 	// Test alongside another mod: -PtestMods=/absolute/path/to/mod.jar (e.g. Freecam)
 	if (project.hasProperty('testMods')) systemProperty 'fabric.addMods', project.property('testMods')
 }
+
+// Test windows never take focus and never play sound (the PC is in use while tests run). Shared with the other mod
+// projects; the GLFW half is the test-only QuietWindowMixin in src/gametest.
+apply from: rootProject.file('gradle/quiet-test-client.gradle')

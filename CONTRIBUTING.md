@@ -4,10 +4,12 @@ Smart Autoclicker is a [Stonecutter](https://stonecutter.kikugie.dev/) multi-ver
 one Gradle project per Minecraft version (`versions/<mc>/gradle.properties`), and as few published jars as possible.
 
 Two buildscripts share `gradle/target-common.gradle`: `build.gradle` for 26.x (unobfuscated, non-remapping Loom) and
-`remap.gradle` for 1.21.x (obfuscated: compiled against Mojang's official mappings, remapped to intermediary by
+`remap.gradle` for 1.20 – 1.21.11 (obfuscated: compiled against Mojang's official mappings, remapped to intermediary by
 `remapJar`). `settings.gradle` picks one per version. The code uses Mojang names everywhere.
 
-You need JDK 21 and JDK 25 (Gradle finds installed JDKs through toolchains): 1.21.x builds and runs on 21, 26.x on 25.
+You need JDK 17, 21 and 25 (Gradle finds installed JDKs through toolchains): 1.20 – 1.20.4 build and run on 17,
+1.20.5 – 1.21.11 on 21, 26.x on 25. Code shared by every version is written for Java 17 (no pattern `switch`, no
+`Math.clamp`).
 
 ```bash
 ./gradlew :26.3:build                    # one version
@@ -40,13 +42,15 @@ for it, so your IDE checks the right branch.
 The tests themselves are in `src/gametest/.../SmartTests.java`, written against a small `TestClient` interface:
 
 - **1.21.4 and later**: Fabric API's client game-test API runs them (`AutoClickerClientGameTest`).
-- **1.21 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
+- **1.20 – 1.21.3**: that API doesn't exist yet, so those versions set `fabric_client_gametest=false` and build the
   mod's own harness (`src/harness`) into the test mod instead. It launches a normal dev client, creates a flat world
   the way Fabric's test world builder does, runs the same tests and quits (exit code 1 on a failure). Differences: the
   game isn't paused between test steps, and mouse clicks go straight to the open screen.
 
 Either way the task is `runClientGameTest`, the window is minimized and the game is muted, and screenshots land in
-`versions/<mc>/build/run/clientGameTest/screenshots/`. On Linux CI the 1.21.x game runs under `xvfb-run`.
+`versions/<mc>/build/run/clientGameTest/screenshots/`. On Linux CI the 1.20.x and 1.21.x games run under `xvfb-run`.
+Test windows never take focus and never play sound (`gradle/quiet-test-client.gradle` plus the test-only
+`QuietWindowMixin`), so you can keep working while they run.
 
 ## Release groups: as few jars as possible
 

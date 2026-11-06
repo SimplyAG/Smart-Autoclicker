@@ -3,7 +3,6 @@ package com.simplyag.autoclicker.util;
 import com.simplyag.autoclicker.config.SmartConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
@@ -29,15 +28,15 @@ public final class Inventories {
     /** How good a food is to auto-eat; negative if it shouldn't be eaten at all. */
     public static float foodScore(ItemStack stack) {
         if (stack.isEmpty()) return -1;
-        FoodProperties food = stack.get(DataComponents.FOOD);
+        FoodProperties food = Compat.food(stack);
         if (food == null || HARMFUL_FOOD.contains(stack.getItem())) return -1;
         if (GOLDEN_FOOD.contains(stack.getItem()) && !SmartConfig.get().allowGoldenFood) return -1;
-        return food.nutrition() + food.saturation();
+        return Compat.nutrition(food) + Compat.saturation(food);
     }
 
     public static int nutrition(ItemStack stack) {
-        FoodProperties food = stack.get(DataComponents.FOOD);
-        return food == null ? 0 : food.nutrition();
+        FoodProperties food = Compat.food(stack);
+        return food == null ? 0 : Compat.nutrition(food);
     }
 
     /** Best food slot in the hotbar (0-8), or -1. */

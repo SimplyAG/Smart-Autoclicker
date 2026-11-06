@@ -2,6 +2,7 @@ package com.simplyag.autoclicker.ui.panel;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -45,9 +46,9 @@ public sealed interface Setting {
 
         /** Snaps a 0..1 slider position to a valid value. */
         public int valueAt(double fraction) {
-            double raw = min + Math.clamp(fraction, 0, 1) * (max - min);
+            double raw = min + Mth.clamp(fraction, 0.0, 1.0) * (max - min);
             int snapped = min + (int) Math.round((raw - min) / step) * step;
-            return Math.clamp(snapped, min, max);
+            return Mth.clamp(snapped, min, max);
         }
 
         public double fraction() {

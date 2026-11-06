@@ -83,7 +83,7 @@ public class AutoAttackModule extends Module {
 
     /** What the player itself is looking at: the nearest entity within reach that no block is in front of. */
     private static @Nullable EntityHitResult pickFromPlayer(Minecraft mc, LocalPlayer player) {
-        double range = player.entityInteractionRange();
+        double range = Compat.entityReach(player);
         Vec3 eye = player.getEyePosition();
         Vec3 look = Compat.viewVector(player.getXRot(), player.getYRot());
         Vec3 end = eye.add(look.scale(range));

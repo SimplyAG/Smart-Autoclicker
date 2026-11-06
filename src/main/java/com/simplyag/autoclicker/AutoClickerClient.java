@@ -60,8 +60,10 @@ public class AutoClickerClient implements ClientModInitializer {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
     //?} else {
-    /*public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    /*// tryBuild exists on every version before 1.21.11 (fromNamespaceAndPath only from 1.21, the constructor only
+    // before it), so 1.20.x and 1.21.x compile to the same call and can share jars. The id is always valid.
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.tryBuild(MOD_ID, path);
     }
     *///?}
 

@@ -31,10 +31,10 @@ At <https://authors.curseforge.com> → **Create Project**:
 | Field | Value |
 |---|---|
 | Release type | **Beta** for the first release, then Release once it has had real-world use |
-| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.2.0: `mc1.21-1.21.1` → 1.21, 1.21.1; `mc1.21.2-1.21.4` → 1.21.2, 1.21.3, 1.21.4; `mc1.21.5` → 1.21.5; `mc1.21.6-1.21.8` → 1.21.6, 1.21.7, 1.21.8; `mc1.21.9-1.21.10` → 1.21.9, 1.21.10; `mc1.21.11` → 1.21.11; `mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
+| Game versions | Exactly the versions listed for that jar in `manifest.json`. For 1.3.0: `mc1.20-1.20.1` → 1.20, 1.20.1; `mc1.20.2` → 1.20.2; `mc1.20.3-1.20.4` → 1.20.3, 1.20.4; `mc1.20.5-1.20.6` → 1.20.5, 1.20.6; `mc1.21-1.21.1` → 1.21, 1.21.1; `mc1.21.2-1.21.4` → 1.21.2, 1.21.3, 1.21.4; `mc1.21.5` → 1.21.5; `mc1.21.6-1.21.8` → 1.21.6, 1.21.7, 1.21.8; `mc1.21.9-1.21.10` → 1.21.9, 1.21.10; `mc1.21.11` → 1.21.11; `mc26.1-26.1.2` → 26.1, 26.1.1, 26.1.2; `mc26.2` → 26.2; `mc26.3` → 26.3 |
 | Mod loader | Fabric |
 | Environment | Client |
-| Java | 21 for the 1.21.x jars, 25 for the 26.x jars |
+| Java | 17 for the 1.20 – 1.20.4 jars, 21 for the 1.20.5 – 1.21.11 jars, 25 for the 26.x jars |
 | Related projects | **Fabric API**: Required dependency. **Mod Menu**: Optional dependency |
 | Changelog | Paste from the section below |
 
@@ -84,13 +84,17 @@ Using the Freecam mod? Auto Attack and Mob Sweep keep working from where your ch
 **K** opens the control panel (or use Mod Menu). **Z** stops everything. **H** toggles Auto Walk. Every module and preset can have its own key in *Controls → Key Binds*.
 
 ### Requirements
-Minecraft 1.21 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu.
+Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Fabric Loader, **Fabric API**. Optional: Mod Menu.
 
 ### Which file do I download?
 The CurseForge app, Modrinth app and Prism pick the right file for you. Downloading by hand? Open **Files**, filter by your Minecraft version, or use this table. The Minecraft versions are also in each file name (`smart-autoclicker-mc1.21.6-1.21.8-…jar`).
 
 | Your Minecraft | File name starts with |
 |---|---|
+| 1.20, 1.20.1 | `smart-autoclicker-mc1.20-1.20.1` |
+| 1.20.2 | `smart-autoclicker-mc1.20.2` |
+| 1.20.3, 1.20.4 | `smart-autoclicker-mc1.20.3-1.20.4` |
+| 1.20.5, 1.20.6 | `smart-autoclicker-mc1.20.5-1.20.6` |
 | 1.21, 1.21.1 | `smart-autoclicker-mc1.21-1.21.1` |
 | 1.21.2, 1.21.3, 1.21.4 | `smart-autoclicker-mc1.21.2-1.21.4` |
 | 1.21.5 | `smart-autoclicker-mc1.21.5` |
@@ -106,6 +110,14 @@ Got the wrong one? Nothing breaks: Fabric shows which Minecraft version the file
 ⚠ **Only use this on servers that allow auto clickers and AFK automation.** It's client-side only.
 
 ---
+
+## Changelog for 1.3.0
+
+Now also for Minecraft 1.20, 1.20.1, 1.20.2, 1.20.3, 1.20.4, 1.20.5 and 1.20.6, with every feature.
+
+- 1.20.x on Fabric: four files cover the seven versions (pick the one whose name includes your version)
+- On 1.20 – 1.20.4 the world behind the control panel is dimmed instead of blurred (those versions have no menu blur)
+- No changes for players on 1.21.x or 26.x
 
 ## Changelog for 1.2.0
 
