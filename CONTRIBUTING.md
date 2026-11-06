@@ -91,4 +91,10 @@ the comparison covers them too.
    `release-staging/<mod_version>/` with `manifest.json` (hashes, Minecraft versions, jar contents, git commit). It
    refuses to overwrite a staged release.
 3. Run `./gradlew runClientGameTest` and check the GitHub build is green for the staged commit.
-4. Upload each staged jar to CurseForge, tagged with exactly the Minecraft versions listed for it in `manifest.json`.
+4. Smoke test the staged jars: `./gradlew :<mc>:smokeTest` runs a group's staged jar in a production client (official
+   game jar, Fabric Loader, the Fabric API file players download, Mod Menu where one exists) together with the in-game
+   tests. Run it on the oldest and newest version of every group, each in its own `gradlew` call (they share Loom's
+   assets folder, which Gradle refuses to use from several tasks at once), with
+   `SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0 SDL_WINDOW_ACTIVATE_WHEN_RAISED=0 ALSOFT_DRIVERS=null` set so the games stay in
+   the background and silent. See `gradle/smoke-target.gradle`.
+5. Upload each staged jar to CurseForge, tagged with exactly the Minecraft versions listed for it in `manifest.json`.

@@ -1,0 +1,109 @@
+// Pre-publish smoke test (test-only: nothing here is ever part of a release jar).
+//
+//   gradlew :<mc>:smokeTest
+//
+// Runs the STAGED release jar of <mc>'s release group (release-staging/<mod_version>/, from `clean build stageRelease`)
+// in a production client: the official game jar, Fabric Loader, the Fabric API file players download, Mod Menu where
+// one exists, and the mod as a plain jar, exactly like a player's install (Loom's ClientProductionRunTask). Next to it
+// runs the in-game test suite from src/gametest, as its own remapped jar: Fabric's client game tests from 1.21.4,
+// the mod's own harness before. runClientGameTest proves the code; this proves the file that gets uploaded.
+//
+// Quiet like every test client: the window opens without focus (QuietWindowMixin up to 26.2) and the sound is off
+// (options.txt). Loom's production run can't set environment variables, so for 26.3's SDL window and the silent
+// OpenAL device start Gradle with them: SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0 SDL_WINDOW_ACTIVATE_WHEN_RAISED=0
+// ALSOFT_DRIVERS=null (the game inherits Gradle's environment).
+
+import groovy.json.JsonSlurper
+
+def mcVersion = project.property('minecraft_version') as String
+def loomClassLoader = project.extensions.getByName('loom').class.classLoader
+def productionRunTask = Class.forName('net.fabricmc.loom.task.prod.ClientProductionRunTask', true, loomClassLoader)
+boolean remapped = tasks.names.contains('remapJar')
+boolean fabricGameTests = (project.findProperty('fabric_client_gametest') ?: 'true') == 'true'
+
+repositories {
+	maven {
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content { includeGroup 'maven.modrinth' }
+	}
+}
+
+// The staged file of this version's release group (the name stageRelease gives it).
+def groupVersions = sacGroupVersions as List<String>
+def groupSuffix = groupVersions.size() > 1 ? "${groupVersions.first()}-${groupVersions.last()}" : groupVersions.first()
+def stagedJar = rootProject.file("release-staging/${project.mod_version}/smart-autoclicker-mc${groupSuffix}-${project.mod_version}.jar")
+
+// The test suite as its own mod jar, remapped like a release jar where the game is obfuscated.
+def gametest = sourceSets.getByName('gametest')
+def testDevJar = tasks.register('smokeTestModDevJar', Jar) {
+	from gametest.output
+	archiveBaseName = 'smart-autoclicker-smoketests'
+	archiveVersion = mcVersion
+	archiveClassifier = 'dev'
+	destinationDirectory = layout.buildDirectory.dir('smoke/jars')
+}
+def testModJar = testDevJar
+if (remapped) {
+	testModJar = tasks.register('smokeTestModJar', Class.forName('net.fabricmc.loom.task.RemapJarTask', true, loomClassLoader)) {
+		inputFile = testDevJar.flatMap { it.archiveFile }
+		classpath.from(sourceSets.main.output, gametest.compileClasspath)
+		archiveBaseName = 'smart-autoclicker-smoketests'
+		archiveVersion = mcVersion
+		archiveClassifier = ''
+		destinationDirectory = layout.buildDirectory.dir('smoke/jars')
+	}
+}
+
+def detached = { String notation ->
+	configurations.detachedConfiguration(dependencies.create(notation)).tap { transitive = false }
+}
+// Obfuscated versions run the Modrinth file players download: older Maven fabric-api jars (e.g. 0.28.5+1.14) are
+// empty shells whose modules are separate dependencies.
+def runtimeMods = [detached("${remapped ? 'maven.modrinth:fabric-api' : 'net.fabricmc.fabric-api:fabric-api'}:${project.fabric_version}")]
+// Fabric's client game-test runner (1.21.4+) is a test-only module that the Fabric API file players download leaves
+// out; it comes from Fabric's maven at the version this Fabric API release bundles.
+if (fabricGameTests) {
+	def fabricApiModules = configurations.detachedConfiguration(dependencies.create("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"))
+	runtimeMods << fabricApiModules.filter { it.name.startsWith('fabric-client-gametest-api-v1-') }
+}
+if (project.modmenu_version != 'NONE' && project.findProperty('modmenu_runtime') != 'false') {
+	runtimeMods << detached("com.terraformersmc:modmenu:${project.modmenu_version}")
+}
+
+// The unconditional -XX: options from Mojang's version manifest, which launchers pass and Loom's production run drops
+// (26.3 crashes without -XX:StackShadowPages=32).
+def mojangInfo = new File(gradle.gradleUserHomeDir, "caches/fabric-loom/${mcVersion}/mojang_minecraft_info.json")
+def mojangJvmArgs = mojangInfo.exists() ? ((new JsonSlurper().parse(mojangInfo).arguments?.jvm ?: []) as List)
+		.findAll { it instanceof String && it.startsWith('-XX:') } as List<String> : []
+
+def gameDir = layout.buildDirectory.dir('smoke/game')
+tasks.register('smokeTest', productionRunTask) {
+	group = 'smoke'
+	description = "Runs the staged release jar with the in-game tests in a production ${mcVersion} client."
+	dependsOn testModJar
+	doFirst {
+		if (!stagedJar.exists()) throw new GradleException("${stagedJar} isn't staged; run: gradlew clean build stageRelease")
+		def dir = gameDir.get().asFile
+		dir.deleteDir()
+		dir.mkdirs()
+		new File(dir, 'options.txt').text = ['onboardAccessibility:false', 'tutorialStep:none', 'narrator:0',
+				'joinedFirstServer:true', 'skipMultiplayerWarning:true', 'pauseOnLostFocus:false',
+				'soundCategory_master:0.0'].join('\n') + '\n'
+	}
+	// Replaces Loom's default (this project's own freshly built jar): exactly these mods run.
+	mods.setFrom(stagedJar, testModJar, runtimeMods)
+	runDir = gameDir
+	// The Java this version's players run (Mojang's java_version for it).
+	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of((project.java_version as String) as int) }
+	// Headless AWT: a Fabric Loader error fails the run instead of opening a dialog that waits for a click.
+	jvmArgs.addAll('-Xmx2G', '-Djava.awt.headless=true')
+	jvmArgs.add(fabricGameTests ? '-Dfabric.client.gametest' : '-Dsmart-autoclicker.harness=true')
+	if (project.findProperty('gametest_disable_network_synchronizer') == 'true') {
+		jvmArgs.add('-Dfabric.client.gametest.disableNetworkSynchronizer=true')
+	}
+	jvmArgs.addAll(mojangJvmArgs)
+	programArgs.addAll('--username', 'SACSmoke')
+	timeout = java.time.Duration.ofMinutes(15)
+	outputs.upToDateWhen { false }
+}
