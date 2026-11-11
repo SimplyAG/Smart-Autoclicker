@@ -7,7 +7,6 @@
 		"GameRendererMixin",
 		"GuiMixin",
 		"KeyMappingAccessor",
-		"LegacyKeyMappingAccessor",
 		"MinecraftMixin"
 	],
 	"injectors": {

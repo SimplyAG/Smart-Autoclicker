@@ -1,6 +1,7 @@
 package com.simplyag.autoclicker.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.simplyag.autoclicker.module.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
@@ -29,5 +30,17 @@ public abstract class MinecraftMixin {
     )
     private boolean smart$mineWhileUnfocused(boolean grabbed) {
         return grabbed || ModuleManager.HOLD_ATTACK.isRunning();
+    }
+
+    /**
+     * While Hold Left mines from the player's own view (Freecam camera out), the game's left-click handling would
+     * cancel that mining every tick because the attack key is up; leave it out for those ticks.
+     */
+    @WrapWithCondition(
+            method = "handleKeybinds",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;continueAttack(Z)V")
+    )
+    private boolean smart$letHoldLeftMine(Minecraft mc, boolean leftClick) {
+        return !ModuleManager.HOLD_ATTACK.minesDirectly();
     }
 }

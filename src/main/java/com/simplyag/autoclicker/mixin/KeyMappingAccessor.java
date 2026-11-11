@@ -11,4 +11,11 @@ public interface KeyMappingAccessor {
 
     @Accessor("clickCount")
     void smart$setClickCount(int clickCount);
+
+    /**
+     * Writes the pressed state without going through setDown: KeyMapping has no setDown before 1.15, and the
+     * Freecam mod cancels setDown while its camera is on (see Input.holdPastFreecam).
+     */
+    @Accessor("isDown")
+    void smart$setIsDown(boolean down);
 }

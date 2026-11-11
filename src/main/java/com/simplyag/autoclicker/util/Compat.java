@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.simplyag.autoclicker.AutoClickerClient;
 import com.simplyag.autoclicker.ui.Gfx;
 //? if <1.15
-/*import com.simplyag.autoclicker.mixin.LegacyKeyMappingAccessor;*/
+/*import com.simplyag.autoclicker.mixin.KeyMappingAccessor;*/
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -227,7 +227,7 @@ public final class Compat {
         //? if >=1.15 {
         key.setDown(down);
         //?} else
-        /*((LegacyKeyMappingAccessor) key).smart$setIsDown(down);*/
+        /*((KeyMappingAccessor) key).smart$setIsDown(down);*/
     }
 
     /** The Sneak key (keyShift from 1.15, keySneak before). */
@@ -278,6 +278,14 @@ public final class Compat {
         return player.entityInteractionRange();
         //?} else
         /*return instabuild(player) ? 6.0 : 3.0;*/
+    }
+
+    /** How far the player can reach blocks (mine, place, use). */
+    public static double blockReach(Minecraft mc, LocalPlayer player) {
+        //? if >=1.20.5 {
+        return player.blockInteractionRange();
+        //?} else
+        /*return mc.gameMode == null ? 4.5 : mc.gameMode.getPickRange();*/
     }
 
     /** Creative mode: no hunger, no item use-up. */

@@ -26,7 +26,12 @@ public class HoldUseModule extends Module {
         if (mc.player == null || Compat.screen(mc) != null) return;
         SmartConfig cfg = SmartConfig.get();
         if (cfg.useMode == SmartConfig.UseMode.HOLD) {
-            Input.hold(mc.options.keyUse);
+            // Freecam ignores held keys while its camera is out; holding past it keeps eating, blocking and charging working.
+            if (cameraDetached(mc)) {
+                Input.holdPastFreecam(mc.options.keyUse);
+            } else {
+                Input.hold(mc.options.keyUse);
+            }
         } else {
             long now = System.currentTimeMillis();
             if (now - lastClickMillis >= cfg.useSpamDelayMs) {
