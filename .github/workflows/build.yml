@@ -76,9 +76,10 @@ jobs:
           MINECRAFT: ${{ matrix.minecraft }}
         # Fabric's test world must finish loading within one minute of game ticks. On these software-rendered runners
         # the 1.21.9+ integrated server sometimes stalls while preparing the spawn area and never gets there (the same
-        # versions load in about two seconds in other runs). Downloads from Mojang's servers also fail now and then
-        # (every job sets up all 44 versions, so it downloads a lot). Only those two failures are retried, up to three
-        # attempts; any failing test fails the job straight away.
+        # versions load in about two seconds in other runs). Downloads also fail now and then: from Mojang's servers
+        # (every job sets up all 44 versions, so it downloads a lot) and from the Maven repositories of Gradle's
+        # plugins and libraries (Stonecutter's was unreachable for a whole run once). Only those failures are retried,
+        # up to three attempts; any failing test fails the job straight away.
         run: |
           run_tests() {
             if [[ "$MINECRAFT" == 1.* ]]; then
@@ -94,6 +95,9 @@ jobs:
             elif grep -q 'loom.util.download.DownloadException' test-output.log; then
               echo "::warning::Minecraft $MINECRAFT: a download from Mojang failed (attempt $attempt of 3)"
               sleep 30
+            elif grep -qE 'Could not (download|resolve all|find [^ ]+.jar|GET)' test-output.log; then
+              echo "::warning::Minecraft $MINECRAFT: downloading the build's plugins or libraries failed (attempt $attempt of 3)"
+              sleep 60
             else
               exit 1
             fi
