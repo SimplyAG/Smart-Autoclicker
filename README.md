@@ -24,7 +24,7 @@ Modules that can't work together (like Auto Attack and Hold Left Click) swap eac
 
 **Feedback:** Minecraft-style toasts, a live status HUD (session time, hits, food left, flight distance), alert sounds, and a taskbar flash when something needs you while you're tabbed out. A session summary shows when you stop.
 
-**Freecam:** works with the [Freecam](https://modrinth.com/mod/freecam) mod. Auto Attack and Mob Sweep act on where your character faces, and Elytra Cruise carries the free camera along with you.
+**Freecam:** works with the [Freecam](https://modrinth.com/mod/freecam) mod. Auto Attack, Mob Sweep and Hold Left Click act on where your character faces, Hold Right Click keeps eating, blocking and charging, and Elytra Cruise carries the free camera along with you.
 
 ## Controls
 

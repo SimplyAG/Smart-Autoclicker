@@ -99,9 +99,38 @@ public final class SmartTests {
         server.runCommand("execute as @p at @p run summon husk ^ ^ ^2 {NoAI:1b}");
         context.waitTicks(5);
         context.runOnClient(mc -> ModuleManager.AUTO_ATTACK.start(true));
-        context.waitTicks(20 * 6);
+        for (int t = 0; t < 20 * 15 && server.computeOnServer(SmartTests::countHusks) > 0; t++) context.waitTick();
         check(server.computeOnServer(SmartTests::countHusks) == 0, "Auto Attack should kill a husk with Freecam on");
         context.takeScreenshot("sac_freecam_attack");
+        context.runOnClient(mc -> ModuleManager.stopAll(null));
+
+        // Hold Right Click keeps eating although Freecam ignores held keys
+        server.runCommand(replaceItem("hotbar.1", "cooked_beef 16"));
+        setHunger(server, 6);
+        context.waitTicks(5);
+        context.runOnClient(mc -> {
+            Compat.selectSlot(Compat.inventory(mc.player), 1);
+            ModuleManager.HOLD_USE.start(true);
+        });
+        context.waitFor(mc -> mc.player.getFoodData().getFoodLevel() >= 10, 20 * 10);
+        context.runOnClient(mc -> ModuleManager.stopAll(null));
+        context.waitTicks(5);
+        check(!context.computeOnClient(mc -> mc.options.keyUse.isDown()), "Right click should be released after stopping with Freecam on");
+
+        // Hold Left Click mines the block the player faces, not what the camera sees
+        server.runCommand(replaceItem("hotbar.2", "iron_pickaxe"));
+        server.runCommand("execute as @p at @p run setblock ^ ^1 ^2 stone");
+        context.waitTicks(5);
+        context.runOnClient(mc -> {
+            Compat.selectSlot(Compat.inventory(mc.player), 2);
+            ModuleManager.HOLD_ATTACK.start(true);
+        });
+        context.waitFor(mc -> mc.player.getMainHandItem().getDamageValue() > 0, 20 * 5);
+        context.takeScreenshot("sac_freecam_mine");
+        context.runOnClient(mc -> ModuleManager.stopAll(null));
+        context.waitTicks(5);
+        check(!context.computeOnClient(mc -> mc.options.keyAttack.isDown()), "Left click should be released after stopping with Freecam on");
+        context.runOnClient(mc -> Compat.selectSlot(Compat.inventory(mc.player), 0));
 
         // Sweep turns the player and leaves the camera alone
         float startYaw = context.computeOnClient(mc -> Compat.yRot(mc.player));

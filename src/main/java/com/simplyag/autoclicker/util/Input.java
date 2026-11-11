@@ -19,9 +19,21 @@ public final class Input {
         Compat.setDown(key, true);
     }
 
+    /**
+     * Press a key mapping for this tick even while the Freecam mod is on: Freecam cancels setDown for every key while
+     * its camera is out, so the pressed state is also written directly. Call every tick to keep it held.
+     */
+    public static void holdPastFreecam(KeyMapping key) {
+        Compat.setDown(key, true);
+        ((KeyMappingAccessor) key).smart$setIsDown(true);
+    }
+
     /** Let go of a key mapping, unless the player is physically holding that key themselves. */
     public static void release(KeyMapping key) {
-        Compat.setDown(key, isPhysicallyDown(key));
+        boolean down = isPhysicallyDown(key);
+        Compat.setDown(key, down);
+        // Written directly too, so a key held past Freecam (or by anything else) is really let go.
+        ((KeyMappingAccessor) key).smart$setIsDown(down);
     }
 
     /** Keeps crouching. With Toggle Sneak on, every press flips the key, so only press it when it's up. */
